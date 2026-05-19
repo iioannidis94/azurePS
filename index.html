@@ -344,108 +344,149 @@ const data = [
     cmds: [
       { name: "Connect-AzAccount", desc: "Σύνδεση στο Azure (Interactive ή Service Principal)", code: "Connect-AzAccount\n# Με Service Principal για scripts\n$cred = Get-Credential\nConnect-AzAccount -ServicePrincipal -Credential $cred -TenantId \"<tenant-id>\"", params: [["-TenantId", "Συγκεκριμένο tenant"], ["-ServicePrincipal", "Για automation"]] },
       { name: "Set-AzContext", desc: "Αλλαγή ενεργής subscription", code: "Set-AzContext -SubscriptionId \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"", params: [["-SubscriptionId", "GUID της subscription"]] },
-      { name: "Get-AzSubscription", desc: "Λίστα διαθέσιμων subscriptions", code: "Get-AzSubscription | Format-Table Name, Id, State", params: [["-TenantId", "Φιλτράρισμα βάσει tenant"]] }
+      { name: "Get-AzSubscription", desc: "Λίστα διαθέσιμων subscriptions", code: "Get-AzSubscription | Format-Table Name, Id, State", params: [["-TenantId", "Φιλτράρισμα βάσει tenant"]] },
+      { name: "Clear-AzContext", desc: "Καθαρισμός όλων των αποθηκευμένων credentials και αποσύνδεση", code: "Clear-AzContext -Scope CurrentUser -Force", params: [["-Scope", "CurrentUser ή Process"], ["-Force", "Παράβλεψη επιβεβαίωσης"]] }
     ]
   },
   {
     id: "rg", label: "Resource Groups", icon: "📁",
     cmds: [
       { name: "New-AzResourceGroup", desc: "Δημιουργία νέου Resource Group", code: "New-AzResourceGroup -Name \"myRG\" -Location \"westeurope\" `\n  -Tag @{Environment=\"Prod\"; Owner=\"Team1\"}", params: [["-Name", "Όνομα RG"], ["-Location", "Azure Region"], ["-Tag", "Hashtable με Tags"]] },
-      { name: "Remove-AzResourceGroup", desc: "Διαγραφή Resource Group", code: "Remove-AzResourceGroup -Name \"myRG\" -Force -AsJob", params: [["-Force", "Χωρίς prompt"], ["-AsJob", "Τρέχει στο background"]] }
+      { name: "Get-AzResourceGroup", desc: "Λίστα ή αναζήτηση Resource Groups με wildcards", code: "Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like \"*prod*\"}", params: [["-like", "Wildcard φιλτράρισμα"]] },
+      { name: "Remove-AzResourceGroup", desc: "Διαγραφή Resource Group και όλων των πόρων του", code: "Remove-AzResourceGroup -Name \"myRG\" -Force -AsJob", params: [["-Force", "Χωρίς prompt"], ["-AsJob", "Τρέχει στο background (ασύγχρονα)"]] },
+      { name: "Export-AzResourceGroup", desc: "Εξαγωγή του RG σε ARM Template (JSON)", code: "Export-AzResourceGroup -ResourceGroupName \"myRG\" -Path \"C:\\templates\\myRG.json\"", params: [["-Path", "Τοπικό path αποθήκευσης"]] }
     ]
   },
   {
     id: "vm", label: "Compute / VMs", icon: "💻",
     cmds: [
-      { name: "New-AzVM", desc: "Γρήγορη δημιουργία VM", code: "New-AzVM `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myVM\" `\n  -Location \"westeurope\" `\n  -Image \"Ubuntu2204\" `\n  -Size \"Standard_B2s\" `\n  -Credential (Get-Credential)", params: [["-Image", "OS image"], ["-Size", "Μέγεθος VM"]] },
-      { name: "Start-AzVM / Stop-AzVM", desc: "Έλεγχος κατάστασης VM (Start, Stop, Restart)", code: "Start-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\"\nStop-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\" -Force", params: [["-Force", "Παράβλεψη επιβεβαίωσης"]] }
+      { name: "New-AzVM", desc: "Γρήγορη δημιουργία VM με default ρυθμίσεις δικτύου", code: "New-AzVM `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myVM\" `\n  -Location \"westeurope\" `\n  -Image \"Ubuntu2204\" `\n  -Size \"Standard_B2s\" `\n  -Credential (Get-Credential)", params: [["-Image", "OS image"], ["-Size", "Μέγεθος VM"]] },
+      { name: "Start-AzVM / Stop-AzVM", desc: "Έλεγχος κατάστασης VM (Start, Stop με Deallocation)", code: "Start-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\"\nStop-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\" -Force", params: [["-Force", "Απελευθέρωση IP και Compute χρεώσεων (Deallocate)"]] },
+      { name: "Get-AzVM", desc: "Λήψη αναλυτικών πληροφοριών και PowerState", code: "Get-AzVM -ResourceGroupName \"myRG\" -Status | Select-Object Name, PowerState", params: [["-Status", "Εμφανίζει αν είναι running/deallocated"]] },
+      { name: "Update-AzVM (Resize)", desc: "Αλλαγή μεγέθους (SKU) σε υφιστάμενο VM", code: "$vm = Get-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\"\n$vm.HardwareProfile.VmSize = \"Standard_D4s_v3\"\nUpdate-AzVM -ResourceGroupName \"myRG\" -VM $vm", params: [["-VM", "Το τροποποιημένο VM object"]] }
     ]
   },
   {
     id: "net", label: "Networking", icon: "🌐",
     cmds: [
-      { name: "New-AzVirtualNetwork", desc: "Δημιουργία VNet & Subnet", code: "$subnet = New-AzVirtualNetworkSubnetConfig -Name \"Subnet1\" -AddressPrefix \"10.0.1.0/24\"\nNew-AzVirtualNetwork `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myVNet\" `\n  -Location \"westeurope\" `\n  -AddressPrefix \"10.0.0.0/16\" `\n  -Subnet $subnet", params: [["-AddressPrefix", "CIDR range του VNet"]] }
+      { name: "New-AzVirtualNetwork", desc: "Δημιουργία VNet & Subnet", code: "$subnet = New-AzVirtualNetworkSubnetConfig -Name \"Subnet1\" -AddressPrefix \"10.0.1.0/24\"\nNew-AzVirtualNetwork `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myVNet\" `\n  -Location \"westeurope\" `\n  -AddressPrefix \"10.0.0.0/16\" `\n  -Subnet $subnet", params: [["-AddressPrefix", "Το CIDR range του VNet"]] },
+      { name: "New-AzNetworkSecurityRuleConfig", desc: "Δημιουργία κανόνα Firewall (NSG Rule)", code: "$rule = New-AzNetworkSecurityRuleConfig -Name \"Allow-RDP\" `\n  -Protocol Tcp -Direction Inbound -Priority 100 `\n  -SourceAddressPrefix * -SourcePortRange * `\n  -DestinationAddressPrefix * -DestinationPortRange 3389 `\n  -Access Allow", params: [["-Direction", "Inbound/Outbound"], ["-Priority", "100-4096"]] },
+      { name: "Get-AzNetworkInterface", desc: "Λήψη πληροφοριών για τις κάρτες δικτύου (NICs)", code: "Get-AzNetworkInterface -ResourceGroupName \"myRG\" | Select-Object Name, VirtualNetworkSite, MacAddress", params: [["-ResourceGroupName", "RG φιλτράρισμα"]] },
+      { name: "New-AzPublicIpAddress", desc: "Δημιουργία Static ή Dynamic Public IP", code: "New-AzPublicIpAddress -ResourceGroupName \"myRG\" -Name \"myPublicIP\" -Location \"westeurope\" -AllocationMethod Static -Sku Standard", params: [["-AllocationMethod", "Static ή Dynamic"], ["-Sku", "Basic ή Standard"]] }
     ]
   },
   {
     id: "storage", label: "Storage Services", icon: "🗄️",
     cmds: [
-      { name: "New-AzStorageAccount", desc: "Δημιουργία Storage Account", code: "New-AzStorageAccount -ResourceGroupName \"myRG\" `\n  -Name \"mystorageapp123\" `\n  -Location \"westeurope\" `\n  -SkuName \"Standard_LRS\" `\n  -Kind \"StorageV2\"", params: [["-SkuName", "LRS, GRS, ZRS"]] }
+      { name: "New-AzStorageAccount", desc: "Δημιουργία Storage Account", code: "New-AzStorageAccount -ResourceGroupName \"myRG\" `\n  -Name \"mystorageapp123\" `\n  -Location \"westeurope\" `\n  -SkuName \"Standard_LRS\" `\n  -Kind \"StorageV2\"", params: [["-SkuName", "LRS, GRS, ZRS"]] },
+      { name: "Get-AzStorageAccountKey", desc: "Ανάκτηση Access Keys για ένα Storage Account", code: "Get-AzStorageAccountKey -ResourceGroupName \"myRG\" -Name \"mystorageapp123\"", params: [["-Name", "Όνομα Storage Account"]] },
+      { name: "New-AzStorageContainer", desc: "Δημιουργία νέου Blob Container", code: "$ctx = (Get-AzStorageAccount -ResourceGroupName \"myRG\" -Name \"mystorageapp123\").Context\nNew-AzStorageContainer -Name \"templates\" -Context $ctx -Permission Off", params: [["-Permission", "Off (Private), Blob, ή Container"]] },
+      { name: "Set-AzStorageBlobContent", desc: "Ανέβασμα αρχείου (Upload Blob)", code: "$ctx = New-AzStorageContext -StorageAccountName \"mysa\" -StorageAccountKey \"<key>\"\nSet-AzStorageBlobContent -File \"C:\\local.txt\" `\n  -Container \"mycontainer\" `\n  -Blob \"remote.txt\" -Context $ctx", params: [["-File", "Τοπικό path αρχείου"]] }
     ]
   },
   {
     id: "webapp", label: "App Services / Web", icon: "🌍",
     cmds: [
-      { name: "New-AzWebApp", desc: "Δημιουργία Web App", code: "New-AzWebApp `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myUniqueWebApp123\" `\n  -Location \"westeurope\" `\n  -AppServicePlan \"myAppPlan\"", params: [["-AppServicePlan", "Το App Service Plan"]] }
+      { name: "New-AzAppServicePlan", desc: "Δημιουργία App Service Plan (Server Farm)", code: "New-AzAppServicePlan -ResourceGroupName \"myRG\" -Name \"myPlan\" -Location \"westeurope\" -Tier \"Standard\" -WorkerSize \"Small\"", params: [["-Tier", "Free, Shared, Basic, Standard, Premium"]] },
+      { name: "New-AzWebApp", desc: "Δημιουργία Web App μέσα στο Plan", code: "New-AzWebApp `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myUniqueWebApp123\" `\n  -Location \"westeurope\" `\n  -AppServicePlan \"myPlan\"", params: [["-AppServicePlan", "Το App Service Plan"]] },
+      { name: "Restart-AzWebApp", desc: "Επανεκκίνηση του Web App", code: "Restart-AzWebApp -ResourceGroupName \"myRG\" -Name \"myUniqueWebApp123\"", params: [["-Name", "Όνομα του Web App"]] },
+      { name: "Set-AzWebApp (AppSettings)", desc: "Προσθήκη ή ενημέρωση Environment Variables / App Settings", code: "$webApp = Get-AzWebApp -ResourceGroupName \"myRG\" -Name \"myUniqueWebApp123\"\n$appSettings = @{ \"DB_CONNECTION\" = \"Server=...\" }\nSet-AzWebApp -ResourceGroupName \"myRG\" -Name \"myUniqueWebApp123\" -AppSettings $appSettings", params: [["-AppSettings", "Hashtable με Key/Value pairs"]] }
     ]
   },
   {
     id: "sql", label: "Databases / SQL", icon: "🃓",
     cmds: [
-      { name: "New-AzSqlDatabase", desc: "Δημιουργία SQL Database", code: "New-AzSqlDatabase `\n  -ResourceGroupName \"myRG\" `\n  -ServerName \"mysqlserver-demo\" `\n  -DatabaseName \"myDB\" `\n  -Edition \"Standard\" -RequestedServiceObjectiveName \"S0\"", params: [["-Edition", "Basic, Standard, Premium"]] }
+      { name: "New-AzSqlServer", desc: "Δημιουργία λογικού Azure SQL Server", code: "New-AzSqlServer -ResourceGroupName \"myRG\" -ServerName \"mysqlserver123\" -Location \"westeurope\" -SqlAdministratorCredentials (Get-Credential)", params: [["-ServerName", "Μοναδικό global όνομα"]] },
+      { name: "New-AzSqlDatabase", desc: "Δημιουργία SQL Database με DTU μοντέλο χρέωσης", code: "New-AzSqlDatabase `\n  -ResourceGroupName \"myRG\" `\n  -ServerName \"mysqlserver123\" `\n  -DatabaseName \"myDB\" `\n  -Edition \"Standard\" -RequestedServiceObjectiveName \"S0\"", params: [["-Edition", "Basic, Standard, Premium"], ["-RequestedServiceObjectiveName", "DTU level (S0, S1, κλπ.)"]] },
+      { name: "New-AzSqlServerFirewallRule", desc: "Προσθήκη κανόνα Firewall για πρόσβαση IP", code: "New-AzSqlServerFirewallRule -ResourceGroupName \"myRG\" -ServerName \"mysqlserver123\" -FirewallRuleName \"AllowOffice\" -StartIpAddress \"192.168.1.5\" -EndIpAddress \"192.168.1.5\"", params: [["-StartIpAddress", "Αρχική IP range"]] },
+      { name: "Get-AzSqlDatabaseActivity", desc: "Παρακολούθηση ενεργών operations (π.χ. πότε τελειώνει ένα restore/scale)", code: "Get-AzSqlDatabaseActivity -ResourceGroupName \"myRG\" -ServerName \"mysqlserver123\" -DatabaseName \"myDB\"", params: [["-DatabaseName", "Όνομα DB"]] }
     ]
   },
   {
     id: "backup", label: "Backup & DR", icon: "🛡️",
     cmds: [
-      { name: "New-AzRecoveryServicesVault", desc: "Δημιουργία Recovery Vault", code: "New-AzRecoveryServicesVault -ResourceGroupName \"myRG\" -Name \"myVault\" -Location \"westeurope\"", params: [["-Name", "Όνομα Vault"]] }
+      { name: "New-AzRecoveryServicesVault", desc: "Δημιουργία Recovery Services Vault", code: "New-AzRecoveryServicesVault -ResourceGroupName \"myRG\" -Name \"myVault\" -Location \"westeurope\"", params: [["-Name", "Όνομα Vault"]] },
+      { name: "Get-AzRecoveryServicesBackupJob", desc: "Έλεγχος της κατάστασης των τρεχόντων/παλιών Backups", code: "$vault = Get-AzRecoveryServicesVault -ResourceGroupName \"myRG\" -Name \"myVault\"\nGet-AzRecoveryServicesBackupJob -VaultId $vault.ID", params: [["-VaultId", "To ID του Recovery Vault"]] },
+      { name: "Enable-AzRecoveryServicesBackupProtection", desc: "Ενεργοποίηση Backup σε VM με βάση ένα Policy", code: "$vault = Get-AzRecoveryServicesVault -ResourceGroupName \"myRG\" -Name \"myVault\"\n$policy = Get-AzRecoveryServicesBackupProtectionPolicy -VaultId $vault.ID -Name \"DefaultPolicy\"\nEnable-AzRecoveryServicesBackupProtection -ResourceGroupName \"myRG\" -Name \"myVM\" -Policy $policy -VaultId $vault.ID", params: [["-Policy", "Το Backup Policy object"]] },
+      { name: "Backup-AzRecoveryServicesBackupItem", desc: "Trigger χειροκίνητου (On-Demand) Backup τώρα", code: "$vault = Get-AzRecoveryServicesVault -ResourceGroupName \"myRG\" -Name \"myVault\"\n$container = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVM -FriendlyName \"myVM\" -VaultId $vault.ID\n$item = Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType AzureVM -VaultId $vault.ID\nBackup-AzRecoveryServicesBackupItem -Item $item -VaultId $vault.ID", params: [["-Item", "Το Backup item object"]] }
     ]
   },
   {
     id: "cost", label: "Cost & Governance", icon: "💰",
     cmds: [
-      { name: "Get-AzConsumptionUsageDetail", desc: "Λήψη δεδομένων χρέωσης τελευταίων 7 ημερών", code: "Get-AzConsumptionUsageDetail -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) -Top 10", params: [["-Top", "Αριθμός εγγραφών"]] }
+      { name: "Get-AzConsumptionUsageDetail", desc: "Λήψη δεδομένων χρέωσης τελευταίων 7 ημερών", code: "Get-AzConsumptionUsageDetail -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) -Top 10 | Format-Table InstanceName, PretaxCost", params: [["-Top", "Αριθμός εγγραφών"]] },
+      { name: "New-AzResourceLock", desc: "Κλείδωμα πόρου για αποτροπή τυχαίας διαγραφής (Delete Lock)", code: "New-AzResourceLock -LockName \"DoNotDeleteLock\" -LockLevel CanNotDelete -ResourceGroupName \"myRG\" -ResourceName \"myProductionVM\" -ResourceType \"Microsoft.Compute/virtualMachines\"", params: [["-LockLevel", "CanNotDelete ή ReadOnly"]] },
+      { name: "Get-AzResourceLock", desc: "Λίστα όλων των ενεργών Locks σε μια subscription/RG", code: "Get-AzResourceLock -ResourceGroupName \"myRG\"", params: [["-ResourceGroupName", "RG όνομα"]] },
+      { name: "Remove-AzResourceLock", desc: "Αφαίρεση κλειδώματος για να επιτραπεί η διαγραφή", code: "Remove-AzResourceLock -LockName \"DoNotDeleteLock\" -ResourceGroupName \"myRG\" -ResourceName \"myProductionVM\" -ResourceType \"Microsoft.Compute/virtualMachines\" -Force", params: [["-Force", "Χωρίς prompt"]] }
     ]
   },
   {
     id: "azcopy", label: "AzCopy / Data Transfer", icon: "🚀",
     cmds: [
       { name: "azcopy copy (Account to Account)", desc: "Απευθείας μεταφορά δεδομένων Cloud-to-Cloud μεταξύ δύο Storage Accounts", code: "azcopy copy `\n  \"https://<source-sa>.blob.core.windows.net/<container>?<source-SAS>\" `\n  \"https://<target-sa>.blob.core.windows.net/<container>?<target-SAS>\" `\n  --recursive=true", params: [["--recursive", "Αντιγραφή όλων των υποφακέλων"]] },
-      { name: "azcopy sync", desc: "Συγχρονισμός τοπικού φακέλου με Blob Container", code: "azcopy sync \"C:\\local\\folder\" \"https://mysa.blob.core.windows.net/mycontainer?<SAS>\" --delete-destination=true", params: [["--delete-destination", "Διαγραφή στο cloud αν σβηστεί τοπικά"]] }
+      { name: "azcopy sync", desc: "Συγχρονισμός τοπικού φακέλου με Blob Container", code: "azcopy sync \"C:\\local\\folder\" \"https://mysa.blob.core.windows.net/mycontainer?<SAS>\" --delete-destination=true", params: [["--delete-destination", "Διαγραφή στο cloud αν σβηστεί τοπικά"]] },
+      { name: "azcopy login", desc: "Αυθεντικοποίηση στο Azure (μέσω browser ή Service Principal)", code: "azcopy login\n# Με Service Principal\n$env:AZCOPY_SPA_CLIENT_SECRET=\"<client-secret>\"\nazcopy login --service-principal --application-id \"<app-id>\" --tenant-id \"<tenant-id>\"", params: [["--service-principal", "Για non-interactive σενάρια"]] }
     ]
   },
   {
     id: "containers", label: "Containers (AKS/ACR)", icon: "☸️",
     cmds: [
       { name: "New-AzAksCluster", desc: "Δημιουργία Kubernetes (AKS) Cluster", code: "New-AzAksCluster -ResourceGroupName \"myRG\" -Name \"myAKS\" -NodeCount 3 -NodeVmSize \"Standard_D2s_v3\"", params: [["-NodeCount", "Αριθμός Nodes"], ["-NodeVmSize", "Μέγεθος Node VM"]] },
-      { name: "Import-AzAksCredential", desc: "Ανάκτηση Kubeconfig για χρήση με kubectl", code: "Import-AzAksCredential -ResourceGroupName \"myRG\" -Name \"myAKS\" -Force", params: [["-Force", "Overwrite υπάρχοντος config"]] }
+      { name: "Import-AzAksCredential", desc: "Ανάκτηση Kubeconfig για χρήση με kubectl", code: "Import-AzAksCredential -ResourceGroupName \"myRG\" -Name \"myAKS\" -Force", params: [["-Force", "Overwrite υπάρχοντος config"]] },
+      { name: "New-AzContainerRegistry", desc: "Δημιουργία Azure Container Registry (ACR)", code: "New-AzContainerRegistry -ResourceGroupName \"myRG\" -Name \"myRegistry123\" -Sku Standard -Location \"westeurope\"", params: [["-Sku", "Basic, Standard, Premium"]] },
+      { name: "Update-AzAksCluster (Scale)", desc: "Scale των nodes ενός AKS Cluster", code: "Get-AzAksCluster -ResourceGroupName \"myRG\" -Name \"myAKS\" | Set-AzAksCluster -NodeCount 5", params: [["-NodeCount", "Ο νέος επιθυμητός αριθμός nodes"]] }
     ]
   },
   {
     id: "serverless", label: "Serverless & Automation", icon: "⚡",
     cmds: [
-      { name: "New-AzFunctionApp", desc: "Δημιουργία Function App (Serverless)", code: "New-AzFunctionApp -ResourceGroupName \"myRG\" -Name \"myFunction123\" -StorageAccountName \"mysa\" -Location \"westeurope\" -ConsumptionPlanLocation \"westeurope\" -Runtime \"PowerShell\"", params: [["-Runtime", "Dotnet, Node, Python, Java, PowerShell"]] }
+      { name: "New-AzFunctionApp", desc: "Δημιουργία Function App (Serverless)", code: "New-AzFunctionApp -ResourceGroupName \"myRG\" -Name \"myFunc123\" -StorageAccountName \"mysa\" -Location \"westeurope\" -ConsumptionPlanLocation \"westeurope\" -Runtime \"PowerShell\"", params: [["-Runtime", "Dotnet, Node, Python, PowerShell"]] },
+      { name: "New-AzAutomationAccount", desc: "Δημιουργία Automation Account για προγραμματισμένα tasks", code: "New-AzAutomationAccount -ResourceGroupName \"myRG\" -Name \"myAutomation\" -Location \"westeurope\"", params: [["-Name", "Όνομα λογαριασμού"]] },
+      { name: "Start-AzAutomationRunbook", desc: "Εκκίνηση (Trigger) ενός Automation Runbook (script)", code: "Start-AzAutomationRunbook -ResourceGroupName \"myRG\" -AutomationAccountName \"myAutomation\" -Name \"Stop-Idle-VMs\"", params: [["-Name", "Όνομα του Runbook"]] },
+      { name: "Get-AzAutomationJob", desc: "Έλεγχος κατάστασης και output μιας εργασίας Automation", code: "Get-AzAutomationJob -ResourceGroupName \"myRG\" -AutomationAccountName \"myAutomation\"", params: [["-AutomationAccountName", "Όνομα Automation"]] }
     ]
   },
   {
     id: "security", label: "Security & Entra ID", icon: "🔑",
     cmds: [
       { name: "New-AzADUser", desc: "Δημιουργία νέου χρήστη στο Entra ID", code: "New-AzADUser -DisplayName \"John Doe\" -UserPrincipalName \"john@domain.com\" -Password (ConvertTo-SecureString \"P@ssw0rd123!\" -AsPlainText -Force) -AccountEnabled $true", params: [["-UserPrincipalName", "Το UPN/Email του χρήστη"]] },
-      { name: "New-AzRoleAssignment", desc: "Ανάθεση RBAC Ρόλου (π.χ. Reader, Contributor)", code: "New-AzRoleAssignment -SignInName \"user@domain.com\" -RoleDefinitionName \"Contributor\" -ResourceGroupName \"myRG\"", params: [["-RoleDefinitionName", "Owner, Contributor, Reader"]] }
+      { name: "New-AzRoleAssignment", desc: "Ανάθεση RBAC Ρόλου (π.χ. Reader, Contributor)", code: "New-AzRoleAssignment -SignInName \"user@domain.com\" -RoleDefinitionName \"Contributor\" -ResourceGroupName \"myRG\"", params: [["-RoleDefinitionName", "Owner, Contributor, Reader"]] },
+      { name: "New-AzKeyVault", desc: "Δημιουργία Azure Key Vault", code: "New-AzKeyVault -VaultName \"myKV-123\" -ResourceGroupName \"myRG\" -Location \"westeurope\"", params: [["-VaultName", "Μοναδικό όνομα Key Vault"]] },
+      { name: "Set-AzKeyVaultSecret", desc: "Αποθήκευση Secret (π.χ. password) στο Key Vault", code: "$secretval = ConvertTo-SecureString \"SuperSecretValue123\" -AsPlainText -Force\nSet-AzKeyVaultSecret -VaultName \"myKV-123\" -Name \"SQLPassword\" -SecretValue $secretval", params: [["-Name", "Όνομα του secret"], ["-SecretValue", "SecureString τιμή"]] }
     ]
   },
   {
     id: "monitor", label: "Monitoring & Logs", icon: "📊",
     cmds: [
-      { name: "Get-AzLog", desc: "Ανάκτηση Activity Logs για ένα Resource Group", code: "Get-AzLog -ResourceGroupName \"myRG\" -StartTime (Get-Date).AddDays(-3)", params: [["-StartTime", "Έναρξη αναζήτησης αναφορών"]] }
+      { name: "Get-AzLog", desc: "Ανάκτηση Activity Logs για ένα Resource Group", code: "Get-AzLog -ResourceGroupName \"myRG\" -StartTime (Get-Date).AddDays(-3)", params: [["-StartTime", "Έναρξη αναζήτησης αναφορών"]] },
+      { name: "Get-AzMetric", desc: "Λήψη metrics (π.χ. CPU Percentage) ενός VM", code: "$vm = Get-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\"\nGet-AzMetric -ResourceId $vm.Id -MetricName \"Percentage CPU\" -TimeGrainInMinutes 5", params: [["-MetricName", "Όνομα metric (π.χ. Percentage CPU)"]] },
+      { name: "New-AzOperationalInsightsWorkspace", desc: "Δημιουργία Log Analytics Workspace", code: "New-AzOperationalInsightsWorkspace -ResourceGroupName \"myRG\" -Name \"myLAW\" -Location \"westeurope\" -Sku Standard", params: [["-Sku", "PerGB2018 ή Standard"]] },
+      { name: "Set-AzDiagnosticSetting", desc: "Ενεργοποίηση Diagnostic Logs ενός πόρου προς το Log Analytics", code: "$workspace = Get-AzOperationalInsightsWorkspace -ResourceGroupName \"myRG\" -Name \"myLAW\"\n$vm = Get-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\"\nSet-AzDiagnosticSetting -ResourceId $vm.Id -WorkspaceId $workspace.ResourceId -Enabled $true", params: [["-Enabled", "$true ή $false"]] }
     ]
   },
   {
     id: "iac", label: "IaC & Deployments", icon: "📜",
     cmds: [
-      { name: "New-AzResourceGroupDeployment", desc: "Deployment ARM / Bicep Template", code: "New-AzResourceGroupDeployment -ResourceGroupName \"myRG\" -TemplateFile \".\\main.bicep\" -WhatIf", params: [["-TemplateFile", "Path του Bicep/JSON αρχείου"], ["-WhatIf", "Προεπισκόπηση αλλαγών χωρίς εκτέλεση"]] }
+      { name: "New-AzResourceGroupDeployment", desc: "Deployment ARM / Bicep Template", code: "New-AzResourceGroupDeployment -ResourceGroupName \"myRG\" -TemplateFile \".\\main.bicep\" -WhatIf", params: [["-TemplateFile", "Path του Bicep/JSON αρχείου"], ["-WhatIf", "Προεπισκόπηση αλλαγών χωρίς εκτέλεση"]] },
+      { name: "Get-AzResourceGroupDeployment", desc: "Έλεγχος ιστορικού και κατάστασης των προηγούμενων deployments", code: "Get-AzResourceGroupDeployment -ResourceGroupName \"myRG\" | Select-Object DeploymentName, ProvisioningState, Timestamp", params: [["-ResourceGroupName", "Όνομα RG"]] },
+      { name: "Stop-AzResourceGroupDeployment", desc: "Ακύρωση ενός ενεργού deployment που έχει κολλήσει", code: "Stop-AzResourceGroupDeployment -ResourceGroupName \"myRG\" -Name \"main-deployment\"", params: [["-Name", "Όνομα του deployment"]] },
+      { name: "Test-AzResourceGroupDeployment", desc: "Validation (έλεγχος συντακτικού) ενός template πριν το deploy", code: "Test-AzResourceGroupDeployment -ResourceGroupName \"myRG\" -TemplateFile \".\\main.bicep\"", params: [["-TemplateFile", "Το αρχείο προς έλεγχο"]] }
     ]
   },
   {
     id: "ai", label: "AI & Machine Learning", icon: "🤖",
     cmds: [
-      { name: "New-AzCognitiveServicesAccount", desc: "Δημιουργία Azure OpenAI / Cognitive Service πόρου", code: "New-AzCognitiveServicesAccount -ResourceGroupName \"myRG\" -Name \"myOpenAI\" -Type \"CognitiveServices\" -SkuName \"S0\" -Location \"westeurope\"", params: [["-Type", "CognitiveServices, OpenAI, ComputerVision, κ.α."]] }
+      { name: "New-AzCognitiveServicesAccount", desc: "Δημιουργία Azure OpenAI / Cognitive Service πόρου", code: "New-AzCognitiveServicesAccount -ResourceGroupName \"myRG\" -Name \"myOpenAI\" -Type \"CognitiveServices\" -SkuName \"S0\" -Location \"westeurope\"", params: [["-Type", "CognitiveServices, OpenAI, ComputerVision"]] },
+      { name: "Get-AzCognitiveServicesAccountKey", desc: "Ανάκτηση των API Keys για σύνδεση εφαρμογών με το OpenAI", code: "Get-AzCognitiveServicesAccountKey -ResourceGroupName \"myRG\" -Name \"myOpenAI\"", params: [["-Name", "Όνομα του AI resource"]] },
+      { name: "Get-AzCognitiveServicesAccountSkus", desc: "Λίστα διαθέσιμων μοντέλων και SKUs ανά περιοχή", code: "Get-AzCognitiveServicesAccountSkus -Location \"westeurope\"", params: [["-Location", "Azure Region"]] }
     ]
   },
   {
     id: "hybrid", label: "Hybrid & Migration", icon: "🔀",
     cmds: [
-      { name: "ConnectedMachine Module", desc: "Σύνδεση On-Premises Server στο Azure (Azure Arc)", code: "# Εκτελείται τοπικά στον On-Prem server\nConnect-AzAccount\nRegister-AzResourceProvider -ProviderNamespace Microsoft.HybridCompute\nNew-AzConnectedMachine -ResourceGroupName \"hybridRG\" -Name \"LocalServer01\" -Location \"westeurope\"", params: [["New-AzConnectedMachine", "Καταχωρεί τον on-prem server ως Azure Arc resource"]] }
+      { name: "New-AzConnectedMachine", desc: "Σύνδεση On-Premises Server στο Azure (Azure Arc)", code: "# Εκτελείται τοπικά στον On-Prem server\nRegister-AzResourceProvider -ProviderNamespace Microsoft.HybridCompute\nNew-AzConnectedMachine -ResourceGroupName \"hybridRG\" -Name \"LocalServer01\" -Location \"westeurope\"", params: [["New-AzConnectedMachine", "Καταχωρεί τον on-prem server ως Azure Arc resource"]] },
+      { name: "Get-AzConnectedMachine", desc: "Λίστα και έλεγχος κατάστασης (Online/Offline) των Arc Servers", code: "Get-AzConnectedMachine -ResourceGroupName \"hybridRG\" | Select-Object Name, Status, OsName", params: [["-ResourceGroupName", "Όνομα RG"]] },
+      { name: "Remove-AzConnectedMachine", desc: "Αποσύνδεση και διαγραφή ενός Arc Server από το Azure", code: "Remove-AzConnectedMachine -ResourceGroupName \"hybridRG\" -Name \"LocalServer01\" -Force", params: [["-Force", "Χωρίς prompt επιβεβαίωσης"]] }
     ]
   }
 ];
