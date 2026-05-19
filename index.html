@@ -1,270 +1,506 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure PowerShell Cheat Sheet</title>
+    <!-- Εισαγωγή γραμματοσειρών και εικονιδίων -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    
+    <style>
+        :root {
+            /* Microsoft Azure / Fluent Design Colors */
+            --color-primary: #0078D4;
+            --color-primary-hover: #005A9E;
+            --color-bg-main: #F3F2F1;
+            --color-bg-surface: #FFFFFF;
+            --color-text-main: #323130;
+            --color-text-muted: #605E5C;
+            --color-border: #EDEBE9;
+            --color-border-focus: #C8C6C4;
+            --color-code-bg: #1E1E1E;
+            --color-code-text: #D4D4D4;
+            
+            /* Typography & Layout */
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-pill: 20px;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 8px rgba(0,0,0,0.1);
+        }
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-mono);font-size:13px}
-.cs-wrap{padding:1rem 0}
-.search-bar{display:flex;gap:8px;margin-bottom:1.5rem;align-items:center}
-.search-bar input{flex:1;font-size:14px;padding:8px 12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)}
-.filter-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.5rem}
-.fbtn{padding:5px 12px;font-size:12px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:pointer;transition:all .15s}
-.fbtn.active{background:#185FA5;color:#E6F1FB;border-color:#185FA5}
-.fbtn:hover:not(.active){background:var(--color-background-tertiary)}
-.section{margin-bottom:2rem}
-.sec-header{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:0.5px solid var(--color-border-tertiary)}
-.sec-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px}
-.sec-title{font-size:14px;font-weight:500;color:var(--color-text-primary);font-family:var(--font-sans)}
-.sec-count{font-size:12px;color:var(--color-text-tertiary);margin-left:auto;font-family:var(--font-sans)}
-.cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
-.cmd-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;cursor:pointer;transition:border-color .15s}
-.cmd-card:hover{border-color:var(--color-border-secondary)}
-.cmd-card.expanded{border-color:#185FA5}
-.cmd-top{display:flex;align-items:flex-start;gap:8px}
-.cmd-name{font-family:var(--font-mono);font-size:12px;font-weight:500;color:#185FA5;flex:1;word-break:break-all;line-height:1.4}
-.cmd-copy{font-size:11px;color:var(--color-text-tertiary);padding:2px 6px;border-radius:4px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);cursor:pointer;white-space:nowrap;flex-shrink:0}
-.cmd-copy:hover{background:var(--color-background-tertiary)}
-.cmd-desc{font-size:12px;color:var(--color-text-secondary);margin-top:5px;font-family:var(--font-sans);line-height:1.5}
-.cmd-detail{margin-top:10px;display:none}
-.cmd-detail.show{display:block}
-.code-block{background:var(--color-background-secondary);border-radius:6px;padding:8px 10px;font-size:11.5px;font-family:var(--font-mono);color:var(--color-text-primary);line-height:1.7;overflow-x:auto;white-space:pre;border:0.5px solid var(--color-border-tertiary)}
-.param-table{width:100%;font-size:12px;margin-top:8px;font-family:var(--font-sans);border-collapse:collapse}
-.param-table td{padding:4px 6px;vertical-align:top}
-.param-table td:first-child{color:#185FA5;font-family:var(--font-mono);white-space:nowrap;width:40%}
-.param-table td:last-child{color:var(--color-text-secondary);line-height:1.4}
-.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;font-family:var(--font-sans);font-weight:500;margin-top:4px}
-.tag-storage{background:#E6F1FB;color:#0C447C}
-.tag-vm{background:#E1F5EE;color:#085041}
-.tag-rg{background:#EEEDFE;color:#3C3489}
-.tag-net{background:#FAEEDA;color:#633806}
-.tag-aad{background:#FBEAF0;color:#72243E}
-.tag-monitor{background:#EAF3DE;color:#27500A}
-.tag-aks{background:#FAECE7;color:#712B13}
-.tag-acr{background:#F1EFE8;color:#444441}
-.tag-auth{background:#FCEBEB;color:#791F1F}
-.no-results{text-align:center;padding:2rem;color:var(--color-text-tertiary);font-family:var(--font-sans);font-size:14px}
-</style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-<h2 class="sr-only">Azure PowerShell Cheat Sheet — πλήρης αναφορά εντολών κατά κατηγορία</h2>
+        body {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            background-color: var(--color-bg-main);
+            color: var(--color-text-main);
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .cs-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--color-bg-surface);
+            padding: 2rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        h2.main-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            align-items: center;
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border-focus);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+        }
+
+        .search-bar i {
+            color: var(--color-text-muted);
+            font-size: 20px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            font-size: 15px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--color-text-main);
+            font-family: var(--font-sans);
+        }
+
+        /* Filters */
+        .filter-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 2.5rem;
+        }
+
+        .fbtn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--color-border);
+            background: var(--color-bg-main);
+            color: var(--color-text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fbtn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .fbtn:hover:not(.active) {
+            background: var(--color-border);
+            color: var(--color-text-main);
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .sec-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-bg-main);
+        }
+
+        .sec-icon {
+            font-size: 22px;
+        }
+
+        .sec-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text-main);
+        }
+
+        .sec-count {
+            font-size: 12px;
+            background: var(--color-bg-main);
+            color: var(--color-text-muted);
+            padding: 2px 8px;
+            border-radius: var(--radius-pill);
+            margin-left: auto;
+            font-weight: 500;
+        }
+
+        /* Command Cards */
+        .cmd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .cmd-card {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cmd-card:hover {
+            border-color: var(--color-border-focus);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .cmd-card.expanded {
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .cmd-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .cmd-name {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-primary);
+            word-break: break-word;
+        }
+
+        .cmd-copy {
+            background: var(--color-bg-main);
+            color: var(--color-text-muted);
+            border: none;
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cmd-copy:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .cmd-desc {
+            font-size: 13px;
+            color: var(--color-text-muted);
+            margin-top: 8px;
+        }
+
+        /* Expanded Details */
+        .cmd-detail {
+            margin-top: 16px;
+            display: none;
+            border-top: 1px dashed var(--color-border);
+            padding-top: 16px;
+        }
+
+        .cmd-detail.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .code-block {
+            background: var(--color-code-bg);
+            color: var(--color-code-text);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            font-size: 13px;
+            font-family: var(--font-mono);
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            margin-bottom: 12px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .param-table {
+            width: 100%;
+            font-size: 13px;
+            border-collapse: collapse;
+            background: var(--color-bg-main);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .param-table tr {
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .param-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .param-table td {
+            padding: 8px 12px;
+            vertical-align: top;
+        }
+
+        .param-table td:first-child {
+            color: var(--color-primary-hover);
+            font-family: var(--font-mono);
+            font-weight: 500;
+            white-space: nowrap;
+            width: 35%;
+            background: rgba(0, 120, 212, 0.05);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--color-text-muted);
+            font-size: 16px;
+            background: var(--color-bg-main);
+            border-radius: var(--radius-md);
+            border: 1px dashed var(--color-border-focus);
+        }
+    </style>
+</head>
+<body>
+
 <div class="cs-wrap">
-<div class="search-bar">
-  <i class="ti ti-search" style="color:var(--color-text-tertiary);font-size:18px" aria-hidden="true"></i>
-  <input type="text" id="searchInput" placeholder="Αναζήτηση εντολής ή λειτουργίας..." oninput="filterAll()">
-</div>
-<div class="filter-btns" id="filterBtns"></div>
-<div id="mainContent"></div>
+    <h2 class="main-title">
+        <i class="ti ti-terminal-2"></i> Azure PowerShell Cheat Sheet
+    </h2>
+    
+    <div class="search-bar">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" id="searchInput" placeholder="Αναζήτηση εντολής (π.χ. Get-AzVM), περιγραφής ή παραμέτρου..." oninput="filterAll()">
+    </div>
+    
+    <div class="filter-btns" id="filterBtns"></div>
+    <div id="mainContent"></div>
 </div>
 
 <script>
+// Το Data Object παραμένει ίδιο, μορφοποιημένο ελαφρώς καλύτερα για αναγνωσιμότητα
 const data = [
   {
-    id:"auth", label:"Σύνδεση & Αυθεντικοποίηση", icon:"🔐", tag:"tag-auth", tagLabel:"Auth",
-    cmds:[
-      {name:"Connect-AzAccount", desc:"Σύνδεση στο Azure με interactive login", code:`Connect-AzAccount\n# Με specific tenant\nConnect-AzAccount -TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"\n# Service Principal\n$cred = Get-Credential\nConnect-AzAccount -ServicePrincipal -Credential $cred -TenantId "<tenant-id>"`, params:[["Connect-AzAccount","Ξεκινά interactive browser login"],["‑TenantId","Καθορίζει συγκεκριμένο tenant"],["‑ServicePrincipal","Χρήση service principal για automation"],["‑Subscription","Επιλέγει αρχική subscription"]]},
-      {name:"Get-AzSubscription", desc:"Λίστα όλων των subscriptions", code:`Get-AzSubscription\n# Φιλτράρισμα με pipe\nGet-AzSubscription | Where-Object {$_.State -eq "Enabled"}`, params:[["Get-AzSubscription","Εμφανίζει όλα τα subscriptions"],["‑SubscriptionName","Φιλτράρει με όνομα"],["‑TenantId","Φιλτράρει με tenant"]]},
-      {name:"Set-AzContext", desc:"Αλλαγή ενεργής subscription", code:`Set-AzContext -SubscriptionId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"\n# Ή με όνομα\nSet-AzContext -SubscriptionName "MySubscription"`, params:[["‑SubscriptionId","GUID της subscription"],["‑SubscriptionName","Όνομα subscription"],["‑TenantId","Αλλαγή tenant"]]},
-      {name:"Disconnect-AzAccount", desc:"Αποσύνδεση από Azure", code:`Disconnect-AzAccount\n# Αποσύνδεση συγκεκριμένου user\nDisconnect-AzAccount -Username "user@domain.com"`, params:[["‑Username","Αποσυνδέει συγκεκριμένο account"]]},
+    id: "auth", label: "Σύνδεση & Auth", icon: "🔐",
+    cmds: [
+      { name: "Connect-AzAccount", desc: "Σύνδεση στο Azure με interactive login", code: "Connect-AzAccount\n# Με specific tenant\nConnect-AzAccount -TenantId \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"\n# Service Principal\n$cred = Get-Credential\nConnect-AzAccount -ServicePrincipal -Credential $cred -TenantId \"<tenant-id>\"", params: [["Connect-AzAccount", "Ξεκινά interactive browser login"], ["-TenantId", "Καθορίζει συγκεκριμένο tenant"], ["-ServicePrincipal", "Χρήση service principal για automation"], ["-Subscription", "Επιλέγει αρχική subscription"]] },
+      { name: "Get-AzSubscription", desc: "Λίστα όλων των subscriptions", code: "Get-AzSubscription\n# Φιλτράρισμα με pipe\nGet-AzSubscription | Where-Object {$_.State -eq \"Enabled\"}", params: [["Get-AzSubscription", "Εμφανίζει όλα τα subscriptions"], ["-SubscriptionName", "Φιλτράρει με όνομα"], ["-TenantId", "Φιλτράρει με tenant"]] },
+      { name: "Set-AzContext", desc: "Αλλαγή ενεργής subscription", code: "Set-AzContext -SubscriptionId \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"\n# Ή με όνομα\nSet-AzContext -SubscriptionName \"MySubscription\"", params: [["-SubscriptionId", "GUID της subscription"], ["-SubscriptionName", "Όνομα subscription"], ["-TenantId", "Αλλαγή tenant"]] },
+      { name: "Disconnect-AzAccount", desc: "Αποσύνδεση από Azure", code: "Disconnect-AzAccount\n# Αποσύνδεση συγκεκριμένου user\nDisconnect-AzAccount -Username \"user@domain.com\"", params: [["-Username", "Αποσυνδέει συγκεκριμένο account"]] }
     ]
   },
   {
-    id:"rg", label:"Resource Groups", icon:"📁", tag:"tag-rg", tagLabel:"Resource Groups",
-    cmds:[
-      {name:"New-AzResourceGroup", desc:"Δημιουργία νέου resource group", code:`New-AzResourceGroup -Name "myRG" -Location "westeurope"\n# Με tags\nNew-AzResourceGroup -Name "myRG" -Location "westeurope" \`\n  -Tag @{Environment="Prod"; Owner="Team1"}`, params:[["‑Name","Όνομα resource group"],["‑Location","Azure region (π.χ. westeurope)"],["‑Tag","Hashtable με tags"]]},
-      {name:"Get-AzResourceGroup", desc:"Λίστα/αναζήτηση resource groups", code:`Get-AzResourceGroup\n# Συγκεκριμένο RG\nGet-AzResourceGroup -Name "myRG"\n# Φιλτράρισμα με wildcard\nGet-AzResourceGroup | Where-Object {$_.ResourceGroupName -like "*prod*"}`, params:[["‑Name","Φιλτράρει με όνομα"],["‑Location","Φιλτράρει με region"]]},
-      {name:"Remove-AzResourceGroup", desc:"Διαγραφή resource group και όλων των πόρων", code:`Remove-AzResourceGroup -Name "myRG" -Force\n# Async (δεν περιμένει completion)\nRemove-AzResourceGroup -Name "myRG" -AsJob`, params:[["‑Name","Όνομα RG προς διαγραφή"],["‑Force","Χωρίς confirmation prompt"],["‑AsJob","Τρέχει ασύγχρονα"]]},
-      {name:"Move-AzResource", desc:"Μεταφορά resource σε άλλο RG ή subscription", code:`$resource = Get-AzResource -ResourceName "myVM" -ResourceGroupName "sourceRG"\nMove-AzResource -ResourceId $resource.ResourceId \`\n  -DestinationResourceGroupName "destRG"`, params:[["‑ResourceId","ID του resource"],["‑DestinationResourceGroupName","Στόχος RG"],["‑DestinationSubscriptionId","Στόχος subscription"]]},
+    id: "rg", label: "Resource Groups", icon: "📁",
+    cmds: [
+      { name: "New-AzResourceGroup", desc: "Δημιουργία νέου resource group", code: "New-AzResourceGroup -Name \"myRG\" -Location \"westeurope\"\n# Με tags\nNew-AzResourceGroup -Name \"myRG\" -Location \"westeurope\" `\n  -Tag @{Environment=\"Prod\"; Owner=\"Team1\"}", params: [["-Name", "Όνομα resource group"], ["-Location", "Azure region (π.χ. westeurope)"], ["-Tag", "Hashtable με tags"]] },
+      { name: "Get-AzResourceGroup", desc: "Λίστα/αναζήτηση resource groups", code: "Get-AzResourceGroup\n# Συγκεκριμένο RG\nGet-AzResourceGroup -Name \"myRG\"\n# Φιλτράρισμα με wildcard\nGet-AzResourceGroup | Where-Object {$_.ResourceGroupName -like \"*prod*\"}", params: [["-Name", "Φιλτράρει με όνομα"], ["-Location", "Φιλτράρει με region"]] },
+      { name: "Remove-AzResourceGroup", desc: "Διαγραφή resource group και όλων των πόρων", code: "Remove-AzResourceGroup -Name \"myRG\" -Force\n# Async (δεν περιμένει completion)\nRemove-AzResourceGroup -Name \"myRG\" -AsJob", params: [["-Name", "Όνομα RG προς διαγραφή"], ["-Force", "Χωρίς confirmation prompt"], ["-AsJob", "Τρέχει ασύγχρονα"]] },
+      { name: "Move-AzResource", desc: "Μεταφορά resource σε άλλο RG ή subscription", code: "$resource = Get-AzResource -ResourceName \"myVM\" -ResourceGroupName \"sourceRG\"\nMove-AzResource -ResourceId $resource.ResourceId `\n  -DestinationResourceGroupName \"destRG\"", params: [["-ResourceId", "ID του resource"], ["-DestinationResourceGroupName", "Στόχος RG"], ["-DestinationSubscriptionId", "Στόχος subscription"]] }
     ]
   },
   {
-    id:"storage", label:"Storage Accounts & Blobs", icon:"🗄️", tag:"tag-storage", tagLabel:"Storage",
-    cmds:[
-      {name:"New-AzStorageAccount", desc:"Δημιουργία νέου storage account", code:`New-AzStorageAccount -ResourceGroupName "myRG" \`\n  -Name "mystorageaccount" \`\n  -Location "westeurope" \`\n  -SkuName "Standard_LRS" \`\n  -Kind "StorageV2"`, params:[["‑Name","Μοναδικό όνομα (3-24 χαρακτήρες, lowercase)"],["‑SkuName","Standard_LRS/GRS/ZRS, Premium_LRS"],["‑Kind","StorageV2 (συνιστάται), BlobStorage, FileStorage"],["‑AccessTier","Hot ή Cool για Blob storage"]]},
-      {name:"Get-AzStorageAccountKey", desc:"Ανάκτηση access keys", code:`Get-AzStorageAccountKey -ResourceGroupName "myRG" -Name "mystorageaccount"\n# Χρήση key για context\n$key = (Get-AzStorageAccountKey -ResourceGroupName "myRG" -Name "mysa")[0].Value\n$ctx = New-AzStorageContext -StorageAccountName "mysa" -StorageAccountKey $key`, params:[["‑ResourceGroupName","RG του storage account"],["‑Name","Όνομα storage account"]]},
-      {name:"New-AzStorageContainer", desc:"Δημιουργία blob container", code:`$ctx = New-AzStorageContext -StorageAccountName "mysa" \`\n  -StorageAccountKey "<key>"\nNew-AzStorageContainer -Name "mycontainer" \`\n  -Context $ctx \`\n  -Permission Off`, params:[["‑Name","Όνομα container"],["‑Permission","Off (private), Blob, Container (public)"]]},
-      {name:"Get-AzStorageBlob", desc:"Λίστα blobs σε container", code:`$ctx = New-AzStorageContext -StorageAccountName "mysa" -StorageAccountKey "<key>"\nGet-AzStorageBlob -Container "mycontainer" -Context $ctx\n# Φιλτράρισμα με prefix\nGet-AzStorageBlob -Container "mycontainer" -Prefix "logs/" -Context $ctx`, params:[["‑Container","Όνομα container"],["‑Prefix","Φιλτράρει με prefix (folder-like)"],["‑Blob","Όνομα συγκεκριμένου blob"]]},
-      {name:"Set-AzStorageBlobContent", desc:"Upload αρχείου σε blob storage", code:`$ctx = New-AzStorageContext -StorageAccountName "mysa" -StorageAccountKey "<key>"\nSet-AzStorageBlobContent -File "C:\\localfile.txt" \`\n  -Container "mycontainer" \`\n  -Blob "remotefile.txt" \`\n  -Context $ctx -Force`, params:[["‑File","Τοπικό path αρχείου"],["‑Container","Destination container"],["‑Blob","Όνομα στο cloud"],["‑Force","Overwrite αν υπάρχει"]]},
-      {name:"Get-AzStorageBlobContent", desc:"Download blob από storage", code:`$ctx = New-AzStorageContext -StorageAccountName "mysa" -StorageAccountKey "<key>"\nGet-AzStorageBlobContent -Container "mycontainer" \`\n  -Blob "remotefile.txt" \`\n  -Destination "C:\\downloads\\" \`\n  -Context $ctx`, params:[["‑Blob","Όνομα blob να κατεβεί"],["‑Destination","Τοπικός φάκελος αποθήκευσης"]]},
-      {name:"New-AzStorageAccountSASToken", desc:"Δημιουργία SAS token για storage account", code:`$ctx = New-AzStorageContext -StorageAccountName "mysa" -StorageAccountKey "<key>"\nNew-AzStorageAccountSASToken \`\n  -Service Blob,File \`\n  -ResourceType Service,Container,Object \`\n  -Permission "rwdlacupitfx" \`\n  -ExpiryTime (Get-Date).AddHours(8) \`\n  -Context $ctx`, params:[["‑Service","Blob, File, Queue, Table"],["‑ResourceType","Service, Container, Object"],["‑Permission","r=read,w=write,d=delete,l=list,c=create"],["‑ExpiryTime","Ημερομηνία λήξης token"]]},
-      {name:"Remove-AzStorageBlob", desc:"Διαγραφή blob", code:`$ctx = New-AzStorageContext -StorageAccountName "mysa" -StorageAccountKey "<key>"\nRemove-AzStorageBlob -Container "mycontainer" \`\n  -Blob "oldfile.txt" -Context $ctx\n# Bulk διαγραφή\nGet-AzStorageBlob -Container "mycontainer" -Prefix "temp/" -Context $ctx |\n  Remove-AzStorageBlob`, params:[["‑Container","Όνομα container"],["‑Blob","Blob προς διαγραφή"]]},
+    id: "storage", label: "Storage & Blobs", icon: "🗄️",
+    cmds: [
+      { name: "New-AzStorageAccount", desc: "Δημιουργία νέου storage account", code: "New-AzStorageAccount -ResourceGroupName \"myRG\" `\n  -Name \"mystorageaccount\" `\n  -Location \"westeurope\" `\n  -SkuName \"Standard_LRS\" `\n  -Kind \"StorageV2\"", params: [["-Name", "Μοναδικό όνομα (3-24 χαρακτήρες, lowercase)"], ["-SkuName", "Standard_LRS/GRS/ZRS, Premium_LRS"], ["-Kind", "StorageV2 (συνιστάται), BlobStorage, FileStorage"], ["-AccessTier", "Hot ή Cool για Blob storage"]] },
+      { name: "Get-AzStorageBlobContent", desc: "Download blob από storage", code: "$ctx = New-AzStorageContext -StorageAccountName \"mysa\" -StorageAccountKey \"<key>\"\nGet-AzStorageBlobContent -Container \"mycontainer\" `\n  -Blob \"remotefile.txt\" `\n  -Destination \"C:\\downloads\\\" `\n  -Context $ctx", params: [["-Blob", "Όνομα blob να κατεβεί"], ["-Destination", "Τοπικός φάκελος αποθήκευσης"]] }
     ]
   },
   {
-    id:"vm", label:"Virtual Machines", icon:"💻", tag:"tag-vm", tagLabel:"VM",
-    cmds:[
-      {name:"New-AzVM", desc:"Δημιουργία Virtual Machine (quick)", code:`New-AzVM \`\n  -ResourceGroupName "myRG" \`\n  -Name "myVM" \`\n  -Location "westeurope" \`\n  -Image "Win2022Datacenter" \`\n  -Size "Standard_D2s_v3" \`\n  -Credential (Get-Credential)`, params:[["‑Image","Win2022Datacenter, UbuntuLTS, κ.α."],["‑Size","Standard_D2s_v3, B1s, F4s_v2, κ.α."],["‑Credential","Admin username/password"]]},
-      {name:"Get-AzVM", desc:"Λίστα VMs και λεπτομέρειες", code:`Get-AzVM\n# Με status (PowerState)\nGet-AzVM -ResourceGroupName "myRG" -Status\n# Συγκεκριμένο VM\nGet-AzVM -ResourceGroupName "myRG" -Name "myVM"`, params:[["‑ResourceGroupName","Φιλτράρει ανά RG"],["‑Name","Συγκεκριμένο VM"],["‑Status","Εμφανίζει PowerState"]]},
-      {name:"Start-AzVM / Stop-AzVM", desc:"Εκκίνηση / Διακοπή VM", code:`Start-AzVM -ResourceGroupName "myRG" -Name "myVM"\nStop-AzVM -ResourceGroupName "myRG" -Name "myVM" -Force\n# Async\nStop-AzVM -ResourceGroupName "myRG" -Name "myVM" -NoWait`, params:[["‑Force","Χωρίς confirmation"],["‑NoWait","Δεν περιμένει να τελειώσει"]]},
-      {name:"Restart-AzVM", desc:"Επανεκκίνηση VM", code:`Restart-AzVM -ResourceGroupName "myRG" -Name "myVM"`, params:[["‑ResourceGroupName","RG του VM"],["‑Name","Όνομα VM"]]},
-      {name:"Remove-AzVM", desc:"Διαγραφή VM", code:`Remove-AzVM -ResourceGroupName "myRG" -Name "myVM" -Force\n# ΠΡΟΣΟΧΗ: Δεν διαγράφει disks/NICs αυτόματα\n# Για πλήρη καθαρισμό:\n$vm = Get-AzVM -ResourceGroupName "myRG" -Name "myVM"\n$disk = $vm.StorageProfile.OsDisk.ManagedDisk.Id\nRemove-AzVM -ResourceGroupName "myRG" -Name "myVM" -Force\nRemove-AzDisk -ResourceGroupName "myRG" -DiskName ($disk.Split("/")[-1]) -Force`, params:[["‑Force","Χωρίς confirmation"]]},
-      {name:"Resize-AzVM", desc:"Αλλαγή μεγέθους VM (resize)", code:`$vm = Get-AzVM -ResourceGroupName "myRG" -Name "myVM"\n$vm.HardwareProfile.VmSize = "Standard_D4s_v3"\nUpdate-AzVM -ResourceGroupName "myRG" -VM $vm`, params:[["‑VM","Το VM object μετά την τροποποίηση"]]},
-      {name:"Set-AzVMExtension", desc:"Εγκατάσταση VM extension", code:`Set-AzVMExtension \`\n  -ResourceGroupName "myRG" \`\n  -VMName "myVM" \`\n  -Name "CustomScriptExtension" \`\n  -Publisher "Microsoft.Compute" \`\n  -ExtensionType "CustomScriptExtension" \`\n  -TypeHandlerVersion "1.10" \`\n  -Settings @{fileUris=@("https://..."); commandToExecute="powershell.exe ./script.ps1"}`, params:[["‑Publisher","Namespace του extension"],["‑Settings","JSON config για extension"]]},
+    id: "vm", label: "Virtual Machines", icon: "💻",
+    cmds: [
+      { name: "New-AzVM", desc: "Δημιουργία Virtual Machine (quick)", code: "New-AzVM `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myVM\" `\n  -Location \"westeurope\" `\n  -Image \"Win2022Datacenter\" `\n  -Size \"Standard_D2s_v3\" `\n  -Credential (Get-Credential)", params: [["-Image", "Win2022Datacenter, UbuntuLTS, κ.α."], ["-Size", "Standard_D2s_v3, B1s, F4s_v2, κ.α."], ["-Credential", "Admin username/password"]] },
+      { name: "Start-AzVM / Stop-AzVM", desc: "Εκκίνηση / Διακοπή VM", code: "Start-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\"\nStop-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\" -Force", params: [["-Force", "Χωρίς confirmation"], ["-NoWait", "Δεν περιμένει να τελειώσει"]] }
     ]
   },
   {
-    id:"net", label:"Networking", icon:"🌐", tag:"tag-net", tagLabel:"Network",
-    cmds:[
-      {name:"New-AzVirtualNetwork", desc:"Δημιουργία Virtual Network", code:`$subnet = New-AzVirtualNetworkSubnetConfig -Name "default" -AddressPrefix "10.0.1.0/24"\nNew-AzVirtualNetwork \`\n  -ResourceGroupName "myRG" \`\n  -Name "myVNet" \`\n  -Location "westeurope" \`\n  -AddressPrefix "10.0.0.0/16" \`\n  -Subnet $subnet`, params:[["‑AddressPrefix","CIDR block του VNet (π.χ. 10.0.0.0/16)"],["‑Subnet","Subnet config object"]]},
-      {name:"New-AzNetworkSecurityGroup", desc:"Δημιουργία NSG με κανόνες", code:`$rdpRule = New-AzNetworkSecurityRuleConfig -Name "Allow-RDP" \`\n  -Protocol Tcp -Direction Inbound -Priority 1000 \`\n  -SourceAddressPrefix * -SourcePortRange * \`\n  -DestinationAddressPrefix * -DestinationPortRange 3389 \`\n  -Access Allow\nNew-AzNetworkSecurityGroup \`\n  -ResourceGroupName "myRG" -Name "myNSG" \`\n  -Location "westeurope" -SecurityRules $rdpRule`, params:[["‑SecurityRules","Array από rule objects"],["‑Direction","Inbound ή Outbound"],["‑Priority","100-4096 (μικρότερο = υψηλότερη προτεραιότητα)"]]},
-      {name:"New-AzPublicIpAddress", desc:"Δημιουργία Public IP", code:`New-AzPublicIpAddress \`\n  -ResourceGroupName "myRG" \`\n  -Name "myPublicIP" \`\n  -Location "westeurope" \`\n  -AllocationMethod Static \`\n  -Sku Standard`, params:[["‑AllocationMethod","Static ή Dynamic"],["‑Sku","Basic ή Standard"]]},
-      {name:"New-AzLoadBalancer", desc:"Δημιουργία Load Balancer", code:`$publicIP = Get-AzPublicIpAddress -Name "myPublicIP" -ResourceGroupName "myRG"\n$frontendIP = New-AzLoadBalancerFrontendIpConfig -Name "FE" -PublicIpAddress $publicIP\n$backendPool = New-AzLoadBalancerBackendAddressPoolConfig -Name "BE"\nNew-AzLoadBalancer \`\n  -ResourceGroupName "myRG" -Name "myLB" \`\n  -Location "westeurope" -Sku Standard \`\n  -FrontendIpConfiguration $frontendIP \`\n  -BackendAddressPool $backendPool`, params:[["‑Sku","Basic ή Standard"],["‑FrontendIpConfiguration","Frontend IP config"]]},
-      {name:"Get-AzNetworkInterface", desc:"Λίστα/λεπτομέρειες NICs", code:`Get-AzNetworkInterface -ResourceGroupName "myRG"\n# Συγκεκριμένο NIC\nGet-AzNetworkInterface -Name "myNIC" -ResourceGroupName "myRG"`, params:[["‑ResourceGroupName","Φιλτράρει ανά RG"],["‑Name","Συγκεκριμένο NIC"]]},
+    id: "net", label: "Networking", icon: "🌐",
+    cmds: [
+      { name: "New-AzVirtualNetwork", desc: "Δημιουργία Virtual Network", code: "$subnet = New-AzVirtualNetworkSubnetConfig -Name \"default\" -AddressPrefix \"10.0.1.0/24\"\nNew-AzVirtualNetwork `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myVNet\" `\n  -Location \"westeurope\" `\n  -AddressPrefix \"10.0.0.0/16\" `\n  -Subnet $subnet", params: [["-AddressPrefix", "CIDR block του VNet"], ["-Subnet", "Subnet config object"]] }
     ]
-  },
-  {
-    id:"aad", label:"Azure AD / Entra ID", icon:"🧑‍💼", tag:"tag-aad", tagLabel:"AAD/Entra",
-    cmds:[
-      {name:"Get-AzADUser", desc:"Αναζήτηση χρηστών στο directory", code:`Get-AzADUser\n# Φιλτράρισμα\nGet-AzADUser -DisplayName "John Doe"\nGet-AzADUser -UserPrincipalName "john@contoso.com"\n# Αναζήτηση με startsWith\nGet-AzADUser -StartsWith "John"`, params:[["‑DisplayName","Αναζήτηση με εμφανιζόμενο όνομα"],["‑UserPrincipalName","Email/UPN του χρήστη"],["‑StartsWith","Prefix αναζήτηση"]]},
-      {name:"New-AzADUser", desc:"Δημιουργία νέου χρήστη", code:`New-AzADUser \`\n  -DisplayName "New User" \`\n  -UserPrincipalName "newuser@contoso.com" \`\n  -Password (ConvertTo-SecureString "P@ssw0rd!" -AsPlainText -Force) \`\n  -MailNickname "newuser" \`\n  -AccountEnabled $true`, params:[["‑DisplayName","Εμφανιζόμενο όνομα"],["‑MailNickname","Alias χρήστη"],["‑AccountEnabled","$true για ενεργό account"]]},
-      {name:"New-AzADServicePrincipal", desc:"Δημιουργία Service Principal για automation", code:`$sp = New-AzADServicePrincipal -DisplayName "myApp"\n$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($sp.PasswordCredentials.SecretText)\n$plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)\nWrite-Host "AppId: $($sp.AppId)"\nWrite-Host "Password: $plainPassword"`, params:[["‑DisplayName","Όνομα service principal"],["‑Role","Azure RBAC role"],["‑Scope","Scope για RBAC assignment"]]},
-      {name:"New-AzRoleAssignment", desc:"Ανάθεση RBAC ρόλου σε user/SP", code:`# User σε subscription\nNew-AzRoleAssignment \`\n  -ObjectId (Get-AzADUser -UserPrincipalName "user@contoso.com").Id \`\n  -RoleDefinitionName "Contributor" \`\n  -Scope "/subscriptions/<sub-id>"\n# SP σε Resource Group\nNew-AzRoleAssignment \`\n  -ApplicationId $sp.AppId \`\n  -RoleDefinitionName "Reader" \`\n  -ResourceGroupName "myRG"`, params:[["‑ObjectId","Object ID χρήστη/group/SP"],["‑RoleDefinitionName","Owner, Contributor, Reader, κ.α."],["‑Scope","Subscription, RG, ή resource level"]]},
-      {name:"Get-AzRoleAssignment", desc:"Λίστα RBAC αναθέσεων", code:`Get-AzRoleAssignment\n# Ανά RG\nGet-AzRoleAssignment -ResourceGroupName "myRG"\n# Ανά user\nGet-AzRoleAssignment -SignInName "user@contoso.com"`, params:[["‑ResourceGroupName","Φιλτράρει ανά RG"],["‑SignInName","Email/UPN χρήστη"]]},
-    ]
-  },
-  {
-    id:"monitor", label:"Monitor & Logs", icon:"📊", tag:"tag-monitor", tagLabel:"Monitor",
-    cmds:[
-      {name:"Get-AzLog", desc:"Ανάκτηση Activity Log events", code:`Get-AzLog -StartTime (Get-Date).AddDays(-1) -EndTime (Get-Date)\n# Για συγκεκριμένο RG\nGet-AzLog -ResourceGroupName "myRG" -StartTime (Get-Date).AddDays(-7)\n# Για συγκεκριμένο resource\nGet-AzLog -ResourceId "/subscriptions/<sub>/resourceGroups/myRG/providers/..."`, params:[["‑StartTime","Αρχή χρονικού εύρους"],["‑EndTime","Τέλος χρονικού εύρους"],["‑ResourceGroupName","Φιλτράρει ανά RG"],["‑Status","Succeeded, Failed, κ.α."]]},
-      {name:"Get-AzMetric", desc:"Ανάκτηση metrics για resource", code:`$vm = Get-AzVM -ResourceGroupName "myRG" -Name "myVM"\nGet-AzMetric \`\n  -ResourceId $vm.Id \`\n  -MetricName "Percentage CPU" \`\n  -StartTime (Get-Date).AddHours(-1) \`\n  -EndTime (Get-Date) \`\n  -TimeGrainInMinutes 5`, params:[["‑ResourceId","ID του resource"],["‑MetricName","Όνομα metric (π.χ. Percentage CPU)"],["‑TimeGrainInMinutes","Granularity σε λεπτά"]]},
-      {name:"New-AzAlertRule", desc:"Δημιουργία metric alert rule", code:`Add-AzMetricAlertRuleV2 \`\n  -Name "HighCPU" \`\n  -ResourceGroupName "myRG" \`\n  -WindowSize (New-TimeSpan -Minutes 5) \`\n  -Frequency (New-TimeSpan -Minutes 1) \`\n  -TargetResourceId $vm.Id \`\n  -Condition (New-AzMetricAlertRuleV2Criteria \`\n    -MetricName "Percentage CPU" \`\n    -TimeAggregation Average \`\n    -Operator GreaterThan \`\n    -Threshold 90) \`\n  -Severity 2 -ActionGroupId $ag.Id`, params:[["‑Threshold","Τιμή ορίου (π.χ. 90 για 90% CPU)"],["‑Severity","0=Critical, 1=Error, 2=Warning, 3=Info"],["‑WindowSize","Χρονικό παράθυρο αξιολόγησης"]]},
-      {name:"Get-AzDiagnosticSetting", desc:"Λίστα diagnostic settings resource", code:`Get-AzDiagnosticSetting -ResourceId $vm.Id`, params:[["‑ResourceId","ID του resource"]]},
-    ]
-  },
-  {
-    id:"aks", label:"AKS (Kubernetes)", icon:"☸️", tag:"tag-aks", tagLabel:"AKS",
-    cmds:[
-      {name:"New-AzAksCluster", desc:"Δημιουργία AKS cluster", code:`New-AzAksCluster \`\n  -ResourceGroupName "myRG" \`\n  -Name "myAKS" \`\n  -NodeCount 3 \`\n  -NodeVmSize "Standard_D2s_v3" \`\n  -KubernetesVersion "1.28.0" \`\n  -Location "westeurope"`, params:[["‑NodeCount","Αρχικός αριθμός nodes"],["‑NodeVmSize","VM size για nodes"],["‑KubernetesVersion","Έκδοση K8s"]]},
-      {name:"Get-AzAksCluster", desc:"Λίστα/λεπτομέρειες AKS clusters", code:`Get-AzAksCluster\nGet-AzAksCluster -ResourceGroupName "myRG" -Name "myAKS"`, params:[["‑ResourceGroupName","Φιλτράρει ανά RG"],["‑Name","Συγκεκριμένο cluster"]]},
-      {name:"Import-AzAksCredential", desc:"Ανάκτηση kubeconfig για kubectl", code:`Import-AzAksCredential \`\n  -ResourceGroupName "myRG" \`\n  -Name "myAKS" \`\n  -Force\n# Τώρα μπορείς να χρησιμοποιήσεις kubectl\nkubectl get nodes`, params:[["‑Force","Overwrite υπάρχον kubeconfig"],["‑Admin","Ανάκτηση admin credentials"]]},
-      {name:"Set-AzAksCluster", desc:"Ενημέρωση AKS cluster (scale/upgrade)", code:`# Scale nodes\nGet-AzAksCluster -ResourceGroupName "myRG" -Name "myAKS" | \`\n  Set-AzAksCluster -NodeCount 5\n# Upgrade version\nSet-AzAksCluster -ResourceGroupName "myRG" -Name "myAKS" \`\n  -KubernetesVersion "1.29.0"`, params:[["‑NodeCount","Νέος αριθμός nodes"],["‑KubernetesVersion","Έκδοση για upgrade"]]},
-    ]
-  },
-  {
-    id:"acr", label:"Azure Container Registry", icon:"📦", tag:"tag-acr", tagLabel:"ACR",
-    cmds:[
-      {name:"New-AzContainerRegistry", desc:"Δημιουργία Container Registry", code:`New-AzContainerRegistry \`\n  -ResourceGroupName "myRG" \`\n  -Name "myACR" \`\n  -Location "westeurope" \`\n  -Sku "Standard"`, params:[["‑Sku","Basic, Standard, Premium"],["‑EnableAdminUser","Ενεργοποιεί admin credentials"]]},
-      {name:"Get-AzContainerRegistryCredential", desc:"Ανάκτηση admin credentials για docker login", code:`Get-AzContainerRegistryCredential \`\n  -ResourceGroupName "myRG" \`\n  -Name "myACR"\n# Χρήση για docker login\n$creds = Get-AzContainerRegistryCredential -ResourceGroupName "myRG" -Name "myACR"\ndocker login myACR.azurecr.io -u $creds.Username -p $creds.Password`, params:[["‑Name","Όνομα registry"]]},
-      {name:"Connect-AzContainerRegistry", desc:"Azure CLI-style login σε ACR", code:`Connect-AzContainerRegistry -Name "myACR"\n# Ή με Service Principal\ndocker login myACR.azurecr.io \`\n  --username $sp.AppId \`\n  --password $plainPassword`, params:[["‑Name","Όνομα registry"]]},
-    ]
-  },
-  {
-    id:"keyvault", label:"Key Vault", icon:"🔑", tag:"tag-auth", tagLabel:"Key Vault",
-    cmds:[
-      {name:"New-AzKeyVault", desc:"Δημιουργία Key Vault", code:`New-AzKeyVault \`\n  -Name "myKeyVault" \`\n  -ResourceGroupName "myRG" \`\n  -Location "westeurope" \`\n  -EnabledForDeployment`, params:[["‑EnabledForDeployment","Επιτρέπει σε VMs να διαβάσουν secrets"],["‑EnableSoftDelete","Soft delete για secrets/keys"],["‑Sku","standard ή premium (HSM)"]]},
-      {name:"Set-AzKeyVaultSecret", desc:"Αποθήκευση secret στο Key Vault", code:`$secret = ConvertTo-SecureString "MySecretValue" -AsPlainText -Force\nSet-AzKeyVaultSecret -VaultName "myKeyVault" -Name "dbPassword" -SecretValue $secret`, params:[["‑VaultName","Όνομα Key Vault"],["‑Name","Όνομα secret"],["‑SecretValue","Τιμή ως SecureString"]]},
-      {name:"Get-AzKeyVaultSecret", desc:"Ανάκτηση secret από Key Vault", code:`# Metadata μόνο\nGet-AzKeyVaultSecret -VaultName "myKeyVault" -Name "dbPassword"\n# Τιμή ως plain text\n$secret = Get-AzKeyVaultSecret -VaultName "myKeyVault" -Name "dbPassword" -AsPlainText`, params:[["‑AsPlainText","Επιστρέφει την τιμή ως string"],["‑Version","Συγκεκριμένη έκδοση secret"]]},
-    ]
-  },
-  {
-    id:"tags", label:"Tags & Policy", icon:"🏷️", tag:"tag-rg", tagLabel:"Tags/Policy",
-    cmds:[
-      {name:"Update-AzTag", desc:"Προσθήκη/ενημέρωση tags σε resource", code:`$resourceId = (Get-AzResourceGroup -Name "myRG").ResourceId\nUpdate-AzTag -ResourceId $resourceId \`\n  -Tag @{Environment="Prod"; CostCenter="IT-001"} \`\n  -Operation Merge`, params:[["‑Operation","Merge (προσθήκη), Replace (αντικατάσταση), Delete"]]},
-      {name:"Get-AzTag", desc:"Ανάκτηση tags από resource/subscription", code:`$resourceId = (Get-AzResourceGroup -Name "myRG").ResourceId\nGet-AzTag -ResourceId $resourceId`, params:[["‑ResourceId","ID resource, RG ή subscription"]]},
-      {name:"Get-AzPolicyAssignment", desc:"Λίστα policy assignments", code:`Get-AzPolicyAssignment\n# Ανά scope\nGet-AzPolicyAssignment -Scope "/subscriptions/<sub-id>"`, params:[["‑Scope","Subscription, RG ή resource"]]},
-    ]
-  },
+  }
 ];
 
 let activeFilter = "all";
 let searchTerm = "";
 let expandedCard = null;
 
-function renderFilters(){
-  const c = document.getElementById("filterBtns");
-  c.innerHTML = `<button class="fbtn active" onclick="setFilter('all')">Όλα</button>`;
-  data.forEach(s=>{
-    c.innerHTML += `<button class="fbtn" onclick="setFilter('${s.id}')">${s.icon} ${s.label}</button>`;
-  });
-}
-
-function setFilter(id){
-  activeFilter = id;
-  document.querySelectorAll(".fbtn").forEach(b=>{
-    b.classList.toggle("active", b.textContent.includes(id==="all"?"Όλα":data.find(s=>s.id===id)?.label||"XX"));
-  });
-  renderSections();
-}
-
-function filterAll(){
-  searchTerm = document.getElementById("searchInput").value.toLowerCase();
-  renderSections();
-}
-
-function renderSections(){
-  const container = document.getElementById("mainContent");
-  let html = "";
-  let totalVisible = 0;
-  data.forEach(section=>{
-    if(activeFilter !== "all" && section.id !== activeFilter) return;
-    const cmds = section.cmds.filter(c=>{
-      if(!searchTerm) return true;
-      return c.name.toLowerCase().includes(searchTerm) || c.desc.toLowerCase().includes(searchTerm) || c.code.toLowerCase().includes(searchTerm);
+function renderFilters() {
+    const c = document.getElementById("filterBtns");
+    c.innerHTML = `<button class="fbtn active" onclick="setFilter('all')"><i class="ti ti-apps"></i> Όλα</button>`;
+    data.forEach(s => {
+        c.innerHTML += `<button class="fbtn" onclick="setFilter('${s.id}')">${s.icon} ${s.label}</button>`;
     });
-    if(!cmds.length) return;
-    totalVisible += cmds.length;
-    html += `<div class="section" id="sec-${section.id}">
-      <div class="sec-header">
-        <div class="sec-icon">${section.icon}</div>
-        <span class="sec-title">${section.label}</span>
-        <span class="sec-count">${cmds.length} εντολές</span>
-      </div>
-      <div class="cmd-grid">`;
-    cmds.forEach((cmd,i)=>{
-      const cardId = `${section.id}-${i}`;
-      html += `<div class="cmd-card" id="card-${cardId}" onclick="toggleCard('${cardId}')">
-        <div class="cmd-top">
-          <span class="cmd-name">${cmd.name}</span>
-          <span class="cmd-copy" onclick="copyCode(event,'${cardId}')" title="Αντιγραφή κώδικα"><i class="ti ti-copy" aria-hidden="true"></i></span>
-        </div>
-        <div class="cmd-desc">${cmd.desc}</div>
-        <div class="cmd-detail" id="detail-${cardId}">
-          <div class="code-block" id="code-${cardId}">${escHtml(cmd.code)}</div>
-          ${cmd.params ? `<table class="param-table">${cmd.params.map(p=>`<tr><td>${p[0]}</td><td>${p[1]}</td></tr>`).join("")}</table>` : ""}
-        </div>
-      </div>`;
+}
+
+function setFilter(id) {
+    activeFilter = id;
+    document.querySelectorAll(".fbtn").forEach(b => {
+        const isAll = id === "all" && b.textContent.includes("Όλα");
+        const isTarget = id !== "all" && b.textContent.includes(data.find(s => s.id === id)?.label || "XX");
+        b.classList.toggle("active", isAll || isTarget);
     });
-    html += `</div></div>`;
-  });
-  if(!totalVisible) html = `<div class="no-results"><i class="ti ti-search-off" style="font-size:24px;display:block;margin-bottom:8px" aria-hidden="true"></i>Δεν βρέθηκαν εντολές</div>`;
-  container.innerHTML = html;
+    renderSections();
 }
 
-function toggleCard(id){
-  const detail = document.getElementById("detail-"+id);
-  const card = document.getElementById("card-"+id);
-  if(!detail) return;
-  const isOpen = detail.classList.contains("show");
-  if(expandedCard && expandedCard !== id){
-    const prev = document.getElementById("detail-"+expandedCard);
-    const prevCard = document.getElementById("card-"+expandedCard);
-    if(prev) prev.classList.remove("show");
-    if(prevCard) prevCard.classList.remove("expanded");
-  }
-  detail.classList.toggle("show", !isOpen);
-  card.classList.toggle("expanded", !isOpen);
-  expandedCard = !isOpen ? id : null;
+function filterAll() {
+    searchTerm = document.getElementById("searchInput").value.toLowerCase();
+    renderSections();
 }
 
-function copyCode(e, id){
-  e.stopPropagation();
-  const el = document.getElementById("code-"+id);
-  let text = "";
-  if(el){
-    text = el.textContent;
-  } else {
-    const parts = id.split("-");
-    const sIdx = data.findIndex(s=>s.id===parts[0]);
-    if(sIdx>=0) text = data[sIdx].cmds[parseInt(parts[1])]?.code || "";
-  }
-  navigator.clipboard.writeText(text).then(()=>{
-    const btn = e.currentTarget;
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i>';
-    setTimeout(()=>btn.innerHTML=orig, 1500);
-  });
+function renderSections() {
+    const container = document.getElementById("mainContent");
+    let html = "";
+    let totalVisible = 0;
+    
+    data.forEach(section => {
+        if (activeFilter !== "all" && section.id !== activeFilter) return;
+        
+        const cmds = section.cmds.filter(c => {
+            if (!searchTerm) return true;
+            return c.name.toLowerCase().includes(searchTerm) || 
+                   c.desc.toLowerCase().includes(searchTerm) || 
+                   c.code.toLowerCase().includes(searchTerm);
+        });
+        
+        if (!cmds.length) return;
+        
+        totalVisible += cmds.length;
+        html += `
+        <div class="section" id="sec-${section.id}">
+            <div class="sec-header">
+                <div class="sec-icon">${section.icon}</div>
+                <span class="sec-title">${section.label}</span>
+                <span class="sec-count">${cmds.length} εντολές</span>
+            </div>
+            <div class="cmd-grid">`;
+            
+        cmds.forEach((cmd, i) => {
+            const cardId = `${section.id}-${i}`;
+            html += `
+                <div class="cmd-card" id="card-${cardId}" onclick="toggleCard('${cardId}')">
+                    <div class="cmd-top">
+                        <span class="cmd-name">${cmd.name}</span>
+                        <button class="cmd-copy" onclick="copyCode(event, '${cardId}')" title="Αντιγραφή κώδικα">
+                            <i class="ti ti-copy" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="cmd-desc">${cmd.desc}</div>
+                    <div class="cmd-detail" id="detail-${cardId}">
+                        <div class="code-block" id="code-${cardId}">${escHtml(cmd.code)}</div>
+                        ${cmd.params ? `
+                        <table class="param-table">
+                            ${cmd.params.map(p => `<tr><td>${p[0]}</td><td>${p[1]}</td></tr>`).join("")}
+                        </table>` : ""}
+                    </div>
+                </div>`;
+        });
+        html += `</div></div>`;
+    });
+    
+    if (!totalVisible) {
+        html = `
+        <div class="no-results">
+            <i class="ti ti-mood-sad" style="font-size: 48px; display: block; margin-bottom: 16px; color: var(--color-text-muted);"></i>
+            Δεν βρέθηκαν εντολές που να ταιριάζουν στην αναζήτησή σου.
+        </div>`;
+    }
+    container.innerHTML = html;
 }
 
-function escHtml(s){
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function toggleCard(id) {
+    const detail = document.getElementById("detail-" + id);
+    const card = document.getElementById("card-" + id);
+    if (!detail) return;
+    
+    const isOpen = detail.classList.contains("show");
+    
+    // Κλείσιμο του προηγούμενου ανοιχτού card για πιο καθαρό UI
+    if (expandedCard && expandedCard !== id) {
+        const prev = document.getElementById("detail-" + expandedCard);
+        const prevCard = document.getElementById("card-" + expandedCard);
+        if (prev) prev.classList.remove("show");
+        if (prevCard) prevCard.classList.remove("expanded");
+    }
+    
+    detail.classList.toggle("show", !isOpen);
+    card.classList.toggle("expanded", !isOpen);
+    expandedCard = !isOpen ? id : null;
 }
 
+function copyCode(e, id) {
+    e.stopPropagation();
+    const el = document.getElementById("code-" + id);
+    let text = "";
+    if (el) {
+        text = el.textContent;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = e.currentTarget;
+        const origIcon = btn.innerHTML;
+        btn.innerHTML = '<i class="ti ti-check" style="color: #107C10;" aria-hidden="true"></i>';
+        setTimeout(() => btn.innerHTML = origIcon, 2000);
+    });
+}
+
+function escHtml(s) {
+    return s.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+}
+
+// Αρχικοποίηση
 renderFilters();
 renderSections();
 </script>
+
+</body>
+</html>
