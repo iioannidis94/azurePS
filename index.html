@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Azure PowerShell Cheat Sheet - Dark Mode</title>
+    <!-- Εισαγωγή γραμματοσειρών και εικονιδίων -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    
+    <style>
+        :root {
+            /* Azure Dark Theme Colors */
+            --color-primary: #479EF5; 
+            --color-primary-hover: #6CB8F6;
+            --color-bg-main: #121212; 
+            --color-bg-surface: #1E1E1E; 
+            --color-text-main: #E6E6E6; 
+            --color-text-muted: #A0A0A0; 
+            --color-border: #333333;
+            --color-border-focus: #555555;
+            --color-code-bg: #0D0D0D; 
+            --color-code-text: #D4D4D4;
+            
+            /* Typography & Layout */
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-pill: 20px;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.3);
+            --shadow-md: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            background-color: var(--color-bg-main);
+            color: var(--color-text-main);
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .cs-wrap {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--color-bg-surface);
+            padding: 2rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border);
+        }
+
+        h2.main-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            align-items: center;
+            background: var(--color-bg-main);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 1px var(--color-primary);
+        }
+
+        .search-bar i {
+            color: var(--color-text-muted);
+            font-size: 20px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            font-size: 15px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--color-text-main);
+            font-family: var(--font-sans);
+        }
+
+        .search-bar input::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        /* Filters */
+        .filter-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 2.5rem;
+            padding: 10px;
+            background: var(--color-bg-main);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+        }
+
+        .fbtn {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--color-border);
+            background: var(--color-bg-surface);
+            color: var(--color-text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .fbtn.active {
+            background: rgba(71, 158, 245, 0.2);
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .fbtn:hover:not(.active) {
+            background: var(--color-border);
+            color: var(--color-text-main);
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .sec-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .sec-icon {
+            font-size: 22px;
+        }
+
+        .sec-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text-main);
+        }
+
+        .sec-count {
+            font-size: 12px;
+            background: var(--color-bg-main);
+            color: var(--color-text-muted);
+            padding: 2px 8px;
+            border-radius: var(--radius-pill);
+            margin-left: auto;
+            font-weight: 500;
+            border: 1px solid var(--color-border);
+        }
+
+        /* Command Cards */
+        .cmd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .cmd-card {
+            background: var(--color-bg-main);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cmd-card:hover {
+            border-color: var(--color-border-focus);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-2px);
+        }
+
+        .cmd-card.expanded {
+            border-color: var(--color-primary);
+            background: var(--color-bg-surface);
+        }
+
+        .cmd-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .cmd-name {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-primary);
+            word-break: break-word;
+        }
+
+        .cmd-copy {
+            background: var(--color-bg-surface);
+            color: var(--color-text-muted);
+            border: 1px solid var(--color-border);
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cmd-copy:hover {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .cmd-desc {
+            font-size: 13px;
+            color: var(--color-text-muted);
+            margin-top: 8px;
+        }
+
+        /* Expanded Details */
+        .cmd-detail {
+            margin-top: 16px;
+            display: none;
+            border-top: 1px dashed var(--color-border);
+            padding-top: 16px;
+        }
+
+        .cmd-detail.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .code-block {
+            background: var(--color-code-bg);
+            color: var(--color-code-text);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            font-size: 13px;
+            font-family: var(--font-mono);
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            margin-bottom: 12px;
+            border: 1px solid #222;
+        }
+
+        .param-table {
+            width: 100%;
+            font-size: 13px;
+            border-collapse: collapse;
+            background: var(--color-bg-main);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+        }
+
+        .param-table tr {
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .param-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .param-table td {
+            padding: 8px 12px;
+            vertical-align: top;
+        }
+
+        .param-table td:first-child {
+            color: var(--color-primary-hover);
+            font-family: var(--font-mono);
+            font-weight: 500;
+            white-space: nowrap;
+            width: 35%;
+            background: rgba(71, 158, 245, 0.05);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--color-text-muted);
+            font-size: 16px;
+            background: var(--color-bg-main);
+            border-radius: var(--radius-md);
+            border: 1px dashed var(--color-border-focus);
+        }
+    </style>
+</head>
+<body>
+
+<div class="cs-wrap">
+    <h2 class="main-title">
+        <i class="ti ti-terminal-2"></i> Ultimate Azure PowerShell Cheat Sheet
+    </h2>
+    
+    <div class="search-bar">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" id="searchInput" placeholder="Αναζήτηση εντολής, περιγραφής ή παραμέτρου σε όλες τις κατηγορίες..." oninput="filterAll()">
+    </div>
+    
+    <div class="filter-btns" id="filterBtns"></div>
+    <div id="mainContent"></div>
+</div>
+
+<script>
+const data = [
+  {
+    id: "auth", label: "Auth & Subscriptions", icon: "🔐",
+    cmds: [
+      { name: "Connect-AzAccount", desc: "Σύνδεση στο Azure (Interactive ή Service Principal)", code: "Connect-AzAccount\n# Με Service Principal για scripts\n$cred = Get-Credential\nConnect-AzAccount -ServicePrincipal -Credential $cred -TenantId \"<tenant-id>\"", params: [["-TenantId", "Συγκεκριμένο tenant"], ["-ServicePrincipal", "Για automation"]] },
+      { name: "Set-AzContext", desc: "Αλλαγή ενεργής subscription", code: "Set-AzContext -SubscriptionId \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"", params: [["-SubscriptionId", "GUID της subscription"]] },
+      { name: "Get-AzSubscription", desc: "Λίστα διαθέσιμων subscriptions", code: "Get-AzSubscription | Format-Table Name, Id, State", params: [["-TenantId", "Φιλτράρισμα βάσει tenant"]] }
+    ]
+  },
+  {
+    id: "rg", label: "Resource Groups", icon: "📁",
+    cmds: [
+      { name: "New-AzResourceGroup", desc: "Δημιουργία νέου Resource Group", code: "New-AzResourceGroup -Name \"myRG\" -Location \"westeurope\" `\n  -Tag @{Environment=\"Prod\"; Owner=\"Team1\"}", params: [["-Name", "Όνομα RG"], ["-Location", "Azure Region"], ["-Tag", "Hashtable με Tags"]] },
+      { name: "Remove-AzResourceGroup", desc: "Διαγραφή Resource Group", code: "Remove-AzResourceGroup -Name \"myRG\" -Force -AsJob", params: [["-Force", "Χωρίς prompt"], ["-AsJob", "Τρέχει στο background"]] }
+    ]
+  },
+  {
+    id: "vm", label: "Compute / VMs", icon: "💻",
+    cmds: [
+      { name: "New-AzVM", desc: "Γρήγορη δημιουργία VM", code: "New-AzVM `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myVM\" `\n  -Location \"westeurope\" `\n  -Image \"Ubuntu2204\" `\n  -Size \"Standard_B2s\" `\n  -Credential (Get-Credential)", params: [["-Image", "OS image"], ["-Size", "Μέγεθος VM"]] },
+      { name: "Start-AzVM / Stop-AzVM", desc: "Έλεγχος κατάστασης VM (Start, Stop, Restart)", code: "Start-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\"\nStop-AzVM -ResourceGroupName \"myRG\" -Name \"myVM\" -Force", params: [["-Force", "Παράβλεψη επιβεβαίωσης"]] }
+    ]
+  },
+  {
+    id: "net", label: "Networking", icon: "🌐",
+    cmds: [
+      { name: "New-AzVirtualNetwork", desc: "Δημιουργία VNet & Subnet", code: "$subnet = New-AzVirtualNetworkSubnetConfig -Name \"Subnet1\" -AddressPrefix \"10.0.1.0/24\"\nNew-AzVirtualNetwork `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myVNet\" `\n  -Location \"westeurope\" `\n  -AddressPrefix \"10.0.0.0/16\" `\n  -Subnet $subnet", params: [["-AddressPrefix", "CIDR range του VNet"]] }
+    ]
+  },
+  {
+    id: "storage", label: "Storage Services", icon: "🗄️",
+    cmds: [
+      { name: "New-AzStorageAccount", desc: "Δημιουργία Storage Account", code: "New-AzStorageAccount -ResourceGroupName \"myRG\" `\n  -Name \"mystorageapp123\" `\n  -Location \"westeurope\" `\n  -SkuName \"Standard_LRS\" `\n  -Kind \"StorageV2\"", params: [["-SkuName", "LRS, GRS, ZRS"]] }
+    ]
+  },
+  {
+    id: "webapp", label: "App Services / Web", icon: "🌍",
+    cmds: [
+      { name: "New-AzWebApp", desc: "Δημιουργία Web App", code: "New-AzWebApp `\n  -ResourceGroupName \"myRG\" `\n  -Name \"myUniqueWebApp123\" `\n  -Location \"westeurope\" `\n  -AppServicePlan \"myAppPlan\"", params: [["-AppServicePlan", "Το App Service Plan"]] }
+    ]
+  },
+  {
+    id: "sql", label: "Databases / SQL", icon: "🃓",
+    cmds: [
+      { name: "New-AzSqlDatabase", desc: "Δημιουργία SQL Database", code: "New-AzSqlDatabase `\n  -ResourceGroupName \"myRG\" `\n  -ServerName \"mysqlserver-demo\" `\n  -DatabaseName \"myDB\" `\n  -Edition \"Standard\" -RequestedServiceObjectiveName \"S0\"", params: [["-Edition", "Basic, Standard, Premium"]] }
+    ]
+  },
+  {
+    id: "backup", label: "Backup & DR", icon: "🛡️",
+    cmds: [
+      { name: "New-AzRecoveryServicesVault", desc: "Δημιουργία Recovery Vault", code: "New-AzRecoveryServicesVault -ResourceGroupName \"myRG\" -Name \"myVault\" -Location \"westeurope\"", params: [["-Name", "Όνομα Vault"]] }
+    ]
+  },
+  {
+    id: "cost", label: "Cost & Governance", icon: "💰",
+    cmds: [
+      { name: "Get-AzConsumptionUsageDetail", desc: "Λήψη δεδομένων χρέωσης τελευταίων 7 ημερών", code: "Get-AzConsumptionUsageDetail -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) -Top 10", params: [["-Top", "Αριθμός εγγραφών"]] }
+    ]
+  },
+  {
+    id: "azcopy", label: "AzCopy / Data Transfer", icon: "🚀",
+    cmds: [
+      { name: "azcopy copy (Account to Account)", desc: "Απευθείας μεταφορά δεδομένων Cloud-to-Cloud μεταξύ δύο Storage Accounts", code: "azcopy copy `\n  \"https://<source-sa>.blob.core.windows.net/<container>?<source-SAS>\" `\n  \"https://<target-sa>.blob.core.windows.net/<container>?<target-SAS>\" `\n  --recursive=true", params: [["--recursive", "Αντιγραφή όλων των υποφακέλων"]] },
+      { name: "azcopy sync", desc: "Συγχρονισμός τοπικού φακέλου με Blob Container", code: "azcopy sync \"C:\\local\\folder\" \"https://mysa.blob.core.windows.net/mycontainer?<SAS>\" --delete-destination=true", params: [["--delete-destination", "Διαγραφή στο cloud αν σβηστεί τοπικά"]] }
+    ]
+  },
+  {
+    id: "containers", label: "Containers (AKS/ACR)", icon: "☸️",
+    cmds: [
+      { name: "New-AzAksCluster", desc: "Δημιουργία Kubernetes (AKS) Cluster", code: "New-AzAksCluster -ResourceGroupName \"myRG\" -Name \"myAKS\" -NodeCount 3 -NodeVmSize \"Standard_D2s_v3\"", params: [["-NodeCount", "Αριθμός Nodes"], ["-NodeVmSize", "Μέγεθος Node VM"]] },
+      { name: "Import-AzAksCredential", desc: "Ανάκτηση Kubeconfig για χρήση με kubectl", code: "Import-AzAksCredential -ResourceGroupName \"myRG\" -Name \"myAKS\" -Force", params: [["-Force", "Overwrite υπάρχοντος config"]] }
+    ]
+  },
+  {
+    id: "serverless", label: "Serverless & Automation", icon: "⚡",
+    cmds: [
+      { name: "New-AzFunctionApp", desc: "Δημιουργία Function App (Serverless)", code: "New-AzFunctionApp -ResourceGroupName \"myRG\" -Name \"myFunction123\" -StorageAccountName \"mysa\" -Location \"westeurope\" -ConsumptionPlanLocation \"westeurope\" -Runtime \"PowerShell\"", params: [["-Runtime", "Dotnet, Node, Python, Java, PowerShell"]] }
+    ]
+  },
+  {
+    id: "security", label: "Security & Entra ID", icon: "🔑",
+    cmds: [
+      { name: "New-AzADUser", desc: "Δημιουργία νέου χρήστη στο Entra ID", code: "New-AzADUser -DisplayName \"John Doe\" -UserPrincipalName \"john@domain.com\" -Password (ConvertTo-SecureString \"P@ssw0rd123!\" -AsPlainText -Force) -AccountEnabled $true", params: [["-UserPrincipalName", "Το UPN/Email του χρήστη"]] },
+      { name: "New-AzRoleAssignment", desc: "Ανάθεση RBAC Ρόλου (π.χ. Reader, Contributor)", code: "New-AzRoleAssignment -SignInName \"user@domain.com\" -RoleDefinitionName \"Contributor\" -ResourceGroupName \"myRG\"", params: [["-RoleDefinitionName", "Owner, Contributor, Reader"]] }
+    ]
+  },
+  {
+    id: "monitor", label: "Monitoring & Logs", icon: "📊",
+    cmds: [
+      { name: "Get-AzLog", desc: "Ανάκτηση Activity Logs για ένα Resource Group", code: "Get-AzLog -ResourceGroupName \"myRG\" -StartTime (Get-Date).AddDays(-3)", params: [["-StartTime", "Έναρξη αναζήτησης αναφορών"]] }
+    ]
+  },
+  {
+    id: "iac", label: "IaC & Deployments", icon: "📜",
+    cmds: [
+      { name: "New-AzResourceGroupDeployment", desc: "Deployment ARM / Bicep Template", code: "New-AzResourceGroupDeployment -ResourceGroupName \"myRG\" -TemplateFile \".\\main.bicep\" -WhatIf", params: [["-TemplateFile", "Path του Bicep/JSON αρχείου"], ["-WhatIf", "Προεπισκόπηση αλλαγών χωρίς εκτέλεση"]] }
+    ]
+  },
+  {
+    id: "ai", label: "AI & Machine Learning", icon: "🤖",
+    cmds: [
+      { name: "New-AzCognitiveServicesAccount", desc: "Δημιουργία Azure OpenAI / Cognitive Service πόρου", code: "New-AzCognitiveServicesAccount -ResourceGroupName \"myRG\" -Name \"myOpenAI\" -Type \"CognitiveServices\" -SkuName \"S0\" -Location \"westeurope\"", params: [["-Type", "CognitiveServices, OpenAI, ComputerVision, κ.α."]] }
+    ]
+  },
+  {
+    id: "hybrid", label: "Hybrid & Migration", icon: "🔀",
+    cmds: [
+      { name: "ConnectedMachine Module", desc: "Σύνδεση On-Premises Server στο Azure (Azure Arc)", code: "# Εκτελείται τοπικά στον On-Prem server\nConnect-AzAccount\nRegister-AzResourceProvider -ProviderNamespace Microsoft.HybridCompute\nNew-AzConnectedMachine -ResourceGroupName \"hybridRG\" -Name \"LocalServer01\" -Location \"westeurope\"", params: [["New-AzConnectedMachine", "Καταχωρεί τον on-prem server ως Azure Arc resource"]] }
+    ]
+  }
+];
+
+let activeFilter = "all";
+let searchTerm = "";
+let expandedCard = null;
+
+function renderFilters() {
+    const c = document.getElementById("filterBtns");
+    c.innerHTML = `<button class="fbtn active" onclick="setFilter('all')"><i class="ti ti-apps"></i> Όλα</button>`;
+    data.forEach(s => {
+        c.innerHTML += `<button class="fbtn" onclick="setFilter('${s.id}')">${s.icon} ${s.label}</button>`;
+    });
+}
+
+function setFilter(id) {
+    activeFilter = id;
+    document.querySelectorAll(".fbtn").forEach(b => {
+        const isAll = id === "all" && b.textContent.includes("Όλα");
+        const isTarget = id !== "all" && b.textContent.includes(data.find(s => s.id === id)?.label || "XX");
+        b.classList.toggle("active", isAll || isTarget);
+    });
+    renderSections();
+}
+
+function filterAll() {
+    searchTerm = document.getElementById("searchInput").value.toLowerCase();
+    renderSections();
+}
+
+function renderSections() {
+    const container = document.getElementById("mainContent");
+    let html = "";
+    let totalVisible = 0;
+    
+    data.forEach(section => {
+        if (activeFilter !== "all" && section.id !== activeFilter) return;
+        
+        const cmds = section.cmds.filter(c => {
+            if (!searchTerm) return true;
+            return c.name.toLowerCase().includes(searchTerm) || 
+                   c.desc.toLowerCase().includes(searchTerm) || 
+                   c.code.toLowerCase().includes(searchTerm);
+        });
+        
+        if (!cmds.length) return;
+        
+        totalVisible += cmds.length;
+        html += `
+        <div class="section" id="sec-${section.id}">
+            <div class="sec-header">
+                <div class="sec-icon">${section.icon}</div>
+                <span class="sec-title">${section.label}</span>
+                <span class="sec-count">${cmds.length} εντολές</span>
+            </div>
+            <div class="cmd-grid">`;
+            
+        cmds.forEach((cmd, i) => {
+            const cardId = `${section.id}-${i}`;
+            html += `
+                <div class="cmd-card" id="card-${cardId}" onclick="toggleCard('${cardId}')">
+                    <div class="cmd-top">
+                        <span class="cmd-name">${cmd.name}</span>
+                        <button class="cmd-copy" onclick="copyCode(event, '${cardId}')" title="Αντιγραφή κώδικα">
+                            <i class="ti ti-copy" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="cmd-desc">${cmd.desc}</div>
+                    <div class="cmd-detail" id="detail-${cardId}">
+                        <div class="code-block" id="code-${cardId}">${escHtml(cmd.code)}</div>
+                        ${cmd.params ? `
+                        <table class="param-table">
+                            ${cmd.params.map(p => `<tr><td>${p[0]}</td><td>${p[1]}</td></tr>`).join("")}
+                        </table>` : ""}
+                    </div>
+                </div>`;
+        });
+        html += `</div></div>`;
+    });
+    
+    if (!totalVisible) {
+        html = `
+        <div class="no-results">
+            <i class="ti ti-mood-sad" style="font-size: 48px; display: block; margin-bottom: 16px; color: var(--color-text-muted);"></i>
+            Δεν βρέθηκαν εντολές που να ταιριάζουν στην αναζήτησή σου.
+        </div>`;
+    }
+    container.innerHTML = html;
+}
+
+function toggleCard(id) {
+    const detail = document.getElementById("detail-" + id);
+    const card = document.getElementById("card-" + id);
+    if (!detail) return;
+    
+    const isOpen = detail.classList.contains("show");
+    
+    if (expandedCard && expandedCard !== id) {
+        const prev = document.getElementById("detail-" + expandedCard);
+        const prevCard = document.getElementById("card-" + expandedCard);
+        if (prev) prev.classList.remove("show");
+        if (prevCard) prevCard.classList.remove("expanded");
+    }
+    
+    detail.classList.toggle("show", !isOpen);
+    card.classList.toggle("expanded", !isOpen);
+    expandedCard = !isOpen ? id : null;
+}
+
+function copyCode(e, id) {
+    e.stopPropagation();
+    const el = document.getElementById("code-" + id);
+    let text = "";
+    if (el) {
+        text = el.textContent;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = e.currentTarget;
+        const origIcon = btn.innerHTML;
+        btn.innerHTML = '<i class="ti ti-check" style="color: #479EF5;" aria-hidden="true"></i>';
+        setTimeout(() => btn.innerHTML = origIcon, 2000);
+    });
+}
+
+function escHtml(s) {
+    return s.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+}
+
+renderFilters();
+renderSections();
+</script>
+
+</body>
+</html>
