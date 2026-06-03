@@ -12,7 +12,63 @@
             --color-primary: #479EF5;
             --color-primary-hover: #6CB8F6;
             --color-primary-dim: rgba(71,158,245,0.12);
-            --color-bg-main: #0E0E10;
+            --color-bg-main: #0E0E10;<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23479EF5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 17 10 11 4 5'%3E%3C/polyline%3E%3Cline x1='12' y1='19' x2='20' y2='19'%3E%3C/line%3E%3C/svg%3E">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure PowerShell Cheat Sheet</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="cs-wrap">
+
+            <div class="header">
+                <div class="header-left">
+                    <h1 class="main-title">
+                        <i class="ti ti-terminal-2 azure-icon" aria-hidden="true"></i>
+                        Azure PowerShell Cheat Sheet
+                    </h1>
+                    <span class="subtitle"># Az Module &amp; AzCopy — Full Reference</span>
+                </div>
+                <div class="stats-row" id="statsRow">
+                    <span class="stat-pill highlight" id="totalCmds">Loading...</span>
+                    <span class="stat-pill" id="totalCats">Loading...</span>
+                    <span class="stat-pill">Az 11.x</span>
+                </div>
+            </div>
+
+            <div class="search-bar">
+                <i class="ti ti-search" aria-hidden="true"></i>
+                <input type="text" id="searchInput" placeholder="Search for a command, operation, or parameter..." oninput="filterAll()">
+                <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Clear" aria-label="Clear search">
+                    <i class="ti ti-x" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="filter-wrap">
+                <div class="filter-label">Category</div>
+                <div class="filter-btns" id="filterBtns"></div>
+            </div>
+
+            <div id="mainContent"></div>
+
+            <footer class="footer">
+                Total: <span id="footerCount">0</span> commands &nbsp;·&nbsp; Click a card for the code &nbsp;·&nbsp; <i class="ti ti-copy" style="font-size:11px" aria-hidden="true"></i> to copy
+            </footer>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
             --color-bg-surface: #16161A;
             --color-bg-card: #1C1C22;
             --color-bg-code: #0A0A0D;
